@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Minus } from 'lucide-react';
+import { useCartStore } from '@/store/cartStore';
 
 interface Variant {
   id: string;
@@ -34,9 +35,15 @@ export default function ProductDetailPage() {
   
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [activeImage, setActiveImage] = useState<string>('');
-  
-  // NEW: State to track if the description is expanded
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+  // Cart store methods & state
+  const { items, addItem, updateQuantity, removeItem } = useCartStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function loadProduct() {
@@ -60,6 +67,12 @@ export default function ProductDetailPage() {
     loadProduct();
   }, [slug]);
 
+  // Check how many of the currently selected size are in the cart
+  const currentCartItem = mounted && selectedVariant 
+    ? items.find((i) => i.id === selectedVariant.id) 
+    : undefined;
+  const currentQty = currentCartItem ? currentCartItem.quantity : 0;
+
   if (loading) {
     return <div className="loading-state">Loading botanical details...</div>;
   }
@@ -74,6 +87,35 @@ export default function ProductDetailPage() {
   }
 
   const allImages = [product.featured_image, ...(product.gallery_images || [])].filter(Boolean);
+
+  const handleAddToCart = () => {
+    if (product && selectedVariant) {
+      addItem({
+        id: selectedVariant.id,
+        productId: product.id,
+        name: product.name,
+        slug: product.slug,
+        size: selectedVariant.size,
+        price: selectedVariant.price,
+        quantity: 1,
+        image: product.featured_image
+      });
+    }
+  };
+
+  const handleDecrease = () => {
+    if (!selectedVariant) return;
+    if (currentQty === 1) {
+      removeItem(selectedVariant.id);
+    } else {
+      updateQuantity(selectedVariant.id, -1);
+    }
+  };
+
+  const handleIncrease = () => {
+    if (!selectedVariant) return;
+    updateQuantity(selectedVariant.id, 1);
+  };
 
   return (
     <div className="product-page-container">
@@ -148,10 +190,41 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* ADD TO CART ACTION */}
-          <button className="add-to-cart-btn">
-            ADD TO CART — KSh {selectedVariant?.price}
-          </button>
+          {/* DYNAMIC CART ACTION: BUTTON VS QUANTITY CONTROLLER */}
+          {currentQty === 0 ? (
+            <button className="add-to-cart-btn" onClick={handleAddToCart}>
+              ADD TO CART — KSh {selectedVariant?.price}
+            </button>
+          ) : (
+            <div className="cart-action-group">
+              <div className="qty-control-bar">
+                <button 
+                  className="qty-action-btn" 
+                  onClick={handleDecrease}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus size={18} />
+                </button>
+
+                <div className="qty-display">
+                  <span className="qty-count">{currentQty}</span>
+                </div>
+
+                <button 
+                  className="qty-action-btn" 
+                  onClick={handleIncrease}
+                  aria-label="Increase quantity"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
+
+              <Link href="/cart" className="view-cart-btn">
+                VIEW CART →
+              </Link>
+            </div>
+          )}
+          
 
           {/* LONG DESCRIPTION WITH EXPAND/COLLAPSE */}
           {product.long_description && (
@@ -161,7 +234,6 @@ export default function ProductDetailPage() {
                 <div className={`desc-text ${isDescriptionExpanded ? 'expanded' : 'collapsed'}`}>
                   {product.long_description}
                 </div>
-                {/* Only show the button if the description is actually long */}
                 {product.long_description.length > 150 && (
                   <button 
                     className="read-more-btn"
@@ -347,6 +419,7 @@ export default function ProductDetailPage() {
           font-weight: 600;
         }
 
+        /* Standard Add to Cart */
         .add-to-cart-btn {
           width: 100%;
           background-color: #788E7D;
@@ -363,6 +436,69 @@ export default function ProductDetailPage() {
         .add-to-cart-btn:hover {
           background-color: #687C6D;
         }
+
+        /* Interactive Quantity Controller */
+        .cart-action-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+        }
+        @media (min-width: 640px) {
+          .cart-action-group {
+            flex-direction: row;
+          }
+        }
+        .qty-control-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border: 1px solid #788E7D;
+          background-color: rgba(120, 142, 125, 0.1);
+          flex-grow: 1;
+        }
+        .qty-action-btn {
+          background: transparent;
+          border: none;
+          color: #ffffff;
+          padding: 1.25rem 1.75rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.2s ease;
+        }
+        .qty-action-btn:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+        .qty-display {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .qty-count {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #ffffff;
+        }
+        .view-cart-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #ffffff;
+          color: #000000;
+          font-size: 0.875rem;
+          font-weight: 600;
+          letter-spacing: 0.05em;
+          text-decoration: none;
+          padding: 1.25rem 2rem;
+          transition: background-color 0.2s ease;
+          white-space: nowrap;
+        }
+        .view-cart-btn:hover {
+          background-color: #e5e7eb;
+        }
+
         .shipping-notice {
           font-size: 0.75rem;
           color: #6b7280;
@@ -370,6 +506,7 @@ export default function ProductDetailPage() {
           margin-bottom: 4rem;
         }
 
+        /* Long Description */
         .long-description-container {
           border-top: 1px solid #2A2A2A;
           padding-top: 3rem;
@@ -392,15 +529,12 @@ export default function ProductDetailPage() {
           line-height: 1.8;
           white-space: pre-wrap;
         }
-        
-        /* THE MAGIC ELLIPSES CSS */
         .desc-text.collapsed {
           display: -webkit-box;
-          -webkit-line-clamp: 3; /* Limits to 3 lines */
+          -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
-        
         .read-more-btn {
           background: transparent;
           border: none;

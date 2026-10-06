@@ -1,26 +1,32 @@
 "use client";
 
 import { useState } from 'react';
+import { sendContactEmail } from '@/app/actions/sendEmail';
 
 export default function ContactUsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormAction = async (formData: FormData) => {
     setIsSubmitting(true);
+    setErrorMessage('');
     
-    // Simulate an API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    // Call the server action directly
+    const result = await sendContactEmail(formData);
+    
+    if (result.success) {
       setIsSubmitted(true);
-    }, 1500);
+    } else {
+      setErrorMessage(result.error || 'Something went wrong. Please try again.');
+    }
+    
+    setIsSubmitting(false);
   };
 
   return (
     <div className="contact-container">
       
-      {/* PAGE HEADER */}
       <div className="contact-header">
         <p className="contact-subtitle">Get in Touch</p>
         <h1 className="contact-title">Let's Connect</h1>
@@ -33,25 +39,30 @@ export default function ContactUsPage() {
         
         {/* LEFT COLUMN: INFO */}
         <div className="contact-info">
-          
           <div className="info-block">
             <h3 className="info-heading">Store</h3>
             <p className="info-text">Nairobi, Kenya</p>
           </div>
-
           <div className="info-block">
             <h3 className="info-heading">Reach Out</h3>
-            <a href="mailto:info@silkyspruce.co.ke" className="info-link">info@silkyspruce.co.ke</a>
+            <a href="mailto:fountaincreations@gmail.com" className="info-link">fountaincreations@gmail.com</a>
             <a href="tel:+254757225004" className="info-link">+254 757 225 004</a>
           </div>
-
           <div className="info-block">
             <h3 className="info-heading">Follow Us</h3>
-            <a href="#" className="info-link">Instagram</a>
-            <a href="#" className="info-link">Facebook</a>
-            <a href="#" className="info-link">TikTok</a>
+            <a href="https://www.instagram.com/silky_spruce/" className="info-link">Instagram</a>
+            <a href="https://www.facebook.com/silkyspruce" className="info-link">Facebook</a>
+            <a href="https://www.tiktok.com/@silky_spruce" className="info-link">TikTok</a>
+            <a 
+              href="https://chat.whatsapp.com/GuOXq6nHqdQG0dFMrzpxkp?s=cl&p=a&mlu=4&ilr=4" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="info-link"
+              style={{ color: '#25D366', borderColor: '#25D366', marginTop: '1rem' }}
+            >
+              Join the Silky Spruce Tribe
+            </a>
           </div>
-
         </div>
 
         {/* RIGHT COLUMN: FORM */}
@@ -65,27 +76,31 @@ export default function ContactUsPage() {
               </button>
             </div>
           ) : (
-            <form className="contact-form" onSubmit={handleSubmit}>
+            <form className="contact-form" action={handleFormAction}>
               
+              {errorMessage && (
+                <div className="text-red-500 mb-4 text-sm font-semibold">{errorMessage}</div>
+              )}
+
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="firstName">First Name</label>
-                  <input type="text" id="firstName" required />
+                  <input type="text" id="firstName" name="firstName" required />
                 </div>
                 <div className="form-group">
                   <label htmlFor="lastName">Last Name</label>
-                  <input type="text" id="lastName" required />
+                  <input type="text" id="lastName" name="lastName" required />
                 </div>
               </div>
 
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
-                <input type="email" id="email" required />
+                <input type="email" id="email" name="email" required />
               </div>
 
               <div className="form-group">
                 <label htmlFor="message">Message</label>
-                <textarea id="message" rows={6} required></textarea>
+                <textarea id="message" name="message" rows={6} required></textarea>
               </div>
 
               <button 

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
+import { sendOrderEmails } from '@/app/actions/sendOrderEmail';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart } = useCartStore();
@@ -13,25 +14,48 @@ export default function CartPage() {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     const isSimulating = process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true';
 
     if (isSimulating) {
-      // --- SANDBOX SIMULATION ---
       const isSuccess = window.confirm(
-        "SANDBOX MODE: Click 'OK' to simulate a SUCCESSFUL payment, or 'Cancel' to simulate a FAILED payment."
+        "SANDBOX MODE: Click 'OK' to simulate a SUCCESSFUL payment."
       );
       
       if (isSuccess) {
-        alert("Payment Successful! Order saved to database. Clearing cart...");
-        clearCart();
-      } else {
-        alert("Payment Failed! Insufficient funds or cancelled by user.");
+        // 1. Calculate totals to pass to the email
+        const currentSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const currentShipping = currentSubtotal > 10000 ? 0 : 500;
+        const currentTotal = currentSubtotal + currentShipping;
+
+        // 2. Generate a fake order ID and mock customer data for testing
+        const mockOrderData = {
+          orderId: `SS-${Math.floor(Math.random() * 10000)}`,
+          customer: {
+            firstName: "Test",
+            lastName: "User",
+            email: "test@example.com",
+            phone: "+254700000000",
+            address: "123 Test Ave, Nairobi, Kenya"
+          },
+          items: items,
+          total: currentTotal,
+          shipping: currentShipping
+        };
+
+        // 3. Fire the emails
+        alert("Payment successful! Sending confirmation emails...");
+        const result = await sendOrderEmails(mockOrderData);
+
+        if (result.success) {
+          alert("Emails sent! Check fountaincreations@gmail.com inbox. Clearing cart...");
+          clearCart();
+        } else {
+          alert("Payment succeeded, but emails failed to send.");
+        }
       }
     } else {
-      // --- REAL PRODUCTION CHECKOUT ---
       alert("Initiating secure payment gateway connection...");
-      // Future integration: Fetch Pesapal/PayPal token and redirect user
     }
   };
 
@@ -140,9 +164,6 @@ export default function CartPage() {
               <span>Delivery</span>
               <span>{shipping === 0 ? 'Free' : `KSh ${shipping}`}</span>
             </div>
-            {shipping > 0 && (
-              <p className="shipping-hint">Spend KSh {10000 - subtotal} more to unlock free delivery.</p>
-            )}
 
             <div className="summary-total">
               <span>Total</span>
@@ -449,12 +470,6 @@ const CartStyles = () => (
         margin-bottom: 1rem; 
         color: #d1d5db; 
         font-size: 1rem; 
-    }
-    .shipping-hint { 
-        font-size: 0.75rem; 
-        color: #788E7D; 
-        margin-bottom: 1.5rem; 
-        text-align: right; 
     }
     .summary-total { 
         display: flex; 
