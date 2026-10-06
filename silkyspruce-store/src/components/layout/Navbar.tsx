@@ -9,7 +9,7 @@ export default function Navbar() {
       {/* Logo */}
       <Link href="/" className="flex-shrink-0">
         <Image 
-          src="/products/Silky Spruce Logo.png" 
+          src="/products/Silky logo.png" 
           alt="Silky Spruce Logo" 
           width={120} 
           height={40} 
