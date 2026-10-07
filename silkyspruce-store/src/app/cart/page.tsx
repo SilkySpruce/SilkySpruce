@@ -5,16 +5,23 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
-import { sendOrderEmails } from '@/app/actions/sendOrderEmail';
+import { processCheckout } from '../actions/processCheckout';
+import { useUserStore } from '@/store/userStore';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart } = useCartStore();
-  
+  const [usePoints, setUsePoints] = useState(false);
+  const { user } = useUserStore();
+  const router = useRouter();
+
   // Hydration fix for Zustand + Next.js
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
 
-  const handleCheckout = async () => {
+const handleCheckout = async () => {
+    if (items.length === 0) return alert("Your cart is empty!");
+
     const isSimulating = process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true';
 
     if (isSimulating) {
@@ -23,35 +30,42 @@ export default function CartPage() {
       );
       
       if (isSuccess) {
-        // 1. Calculate totals to pass to the email
-        const currentSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const currentShipping = currentSubtotal > 10000 ? 0 : 500;
-        const currentTotal = currentSubtotal + currentShipping;
+        // 1. Calculate max points they are allowed to use (can't exceed subtotal)
+        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
+        const pointsApplied = usePoints ? maxPoints : 0;
 
-        // 2. Generate a fake order ID and mock customer data for testing
-        const mockOrderData = {
-          orderId: `SS-${Math.floor(Math.random() * 10000)}`,
+        // 2. Package all the data to send to the backend
+        const checkoutPayload = {
+          userId: user?.id,
+          pointsUsed: pointsApplied, 
           customer: {
-            firstName: "Test",
-            lastName: "User",
-            email: "test@example.com",
-            phone: "+254700000000",
+            firstName: user?.firstName || "Guest",
+            lastName: user?.lastName || "User",
+            email: user?.email || "fountaincreations@gmail.com",
+            phone: user?.phone || "+254700000000",
             address: "123 Test Ave, Nairobi, Kenya"
           },
-          items: items,
-          total: currentTotal,
-          shipping: currentShipping
+          items: items.map(item => ({
+            id: item.id,
+            name: item.name,
+            size: item.size || 'Standard',
+            quantity: item.quantity,
+            price: item.price
+          }))
         };
 
-        // 3. Fire the emails
-        alert("Payment successful! Sending confirmation emails...");
-        const result = await sendOrderEmails(mockOrderData);
+        alert("Payment successful! Processing order...");
+        
+        // 3. Send the payload to our secure Server Action
+        const result = await processCheckout(checkoutPayload);
 
         if (result.success) {
-          alert("Emails sent! Check fountaincreations@gmail.com inbox. Clearing cart...");
+          alert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned} loyalty points.`);
           clearCart();
+          router.push('/account')
         } else {
-          alert("Payment succeeded, but emails failed to send.");
+          alert(`Error: ${result.error}`);
         }
       }
     } else {

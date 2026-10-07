@@ -7,8 +7,33 @@ import Footer from "@/components/layout/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Silky Spruce",
-  description: "Pure, Plant-Based, Handcrafted",
+  title: {
+    template: '%s | Silky Spruce',
+    default: 'Silky Spruce | Handcrafted Botanical Skincare'
+  },
+  description: 'Natural, handcrafted botanical skincare, soaps, and wellness rituals made in Kenya.',
+  metadataBase: new URL('https://silkyspruce.co.ke'), // Replace with your actual domain when you buy it
+  openGraph: {
+    title: 'Silky Spruce | Handcrafted Botanical Skincare',
+    description: 'Natural, handcrafted botanical skincare, soaps, and wellness rituals made in Kenya.',
+    url: 'https://silkyspruce.co.ke',
+    siteName: 'Silky Spruce',
+    images: [
+      {
+        url: '/products/Silky Spruce Logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'Silky Spruce Botanical Skincare',
+      },
+    ],
+    locale: 'en_KE',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Silky Spruce | Handcrafted Botanical Skincare',
+    description: 'Natural, handcrafted botanical skincare, soaps, and wellness rituals.',
+  },
 };
 
 export default function RootLayout({

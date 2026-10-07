@@ -5,6 +5,7 @@ import { Package, MapPin, Star, Heart, User, LogOut, Plus, Trash2, Edit2 } from 
 import { supabase } from '@/lib/supabase';
 import { useUserStore } from '@/store/userStore';
 import Link from 'next/link';
+import { useCartStore } from '@/store/cartStore';
 
 interface Address {
   id: string;
@@ -18,6 +19,7 @@ interface Address {
 
 export default function AccountPage() {
   const { user, isAuthenticated, loginUser, logoutUser } = useUserStore();
+  const { clearCart } = useCartStore();
   
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [activeTab, setActiveTab] = useState('profile');
@@ -108,6 +110,21 @@ export default function AccountPage() {
     }
   };
 
+  // Fetch user's order history
+  const loadOrders = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setOrders(data);
+    } else if (error) {
+      console.error("Error loading orders:", error);
+    }
+  };
+
   // Address Handlers
   const loadAddresses = async (userId: string) => {
     const { data } = await supabase
@@ -129,41 +146,48 @@ export default function AccountPage() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     setIsMounted(true);
+    
+    const fetchAndSetUserData = async (sessionUser: any) => {
+      // Grab their real point balance from the new profiles table
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('loyalty_points')
+        .eq('id', sessionUser.id)
+        .single();
+
+      loginUser({
+        id: sessionUser.id,
+        email: sessionUser.email || '',
+        firstName: sessionUser.user_metadata?.full_name?.split(' ')[0] || '',
+        lastName: sessionUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+        loyaltyPoints: profile?.loyalty_points || 0, 
+        phone: sessionUser.user_metadata?.phone || '',
+      });
+      setPhone(sessionUser.user_metadata?.phone || '');
+      loadAddresses(sessionUser.id);
+      loadOrders(sessionUser.id);
+    };
+
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        loginUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          firstName: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-          lastName: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-          loyaltyPoints: 0,
-          phone: session.user.user_metadata?.phone || '',
-        });
-        setPhone(session.user.user_metadata?.phone || '');
-        loadAddresses(session.user.id); // Fetch addresses here
+        await fetchAndSetUserData(session.user);
       }
     };
     
     checkSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        loginUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          firstName: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-          lastName: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-          loyaltyPoints: 0,
-          phone: session.user.user_metadata?.phone || '',
-        });
-        setPhone(session.user.user_metadata?.phone || '');
-        loadAddresses(session.user.id); // Fetch addresses on state change
+        await fetchAndSetUserData(session.user);
       } else if (event === 'SIGNED_OUT') {
         logoutUser();
-        setAddresses([]); // Clear addresses on logout
+        setAddresses([]);
+        setOrders([]);
+        clearCart();
       }
     });
 
@@ -252,9 +276,11 @@ export default function AccountPage() {
                   placeholder="Jane Doe" 
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  autoComplete="name"
                 />
               </div>
             )}
+            
             <div className="form-group">
               <label>Email Address</label>
               <input 
@@ -263,8 +289,10 @@ export default function AccountPage() {
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
               />
             </div>
+            
             <div className="form-group">
               <label>Password</label>
               <input 
@@ -274,8 +302,22 @@ export default function AccountPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 minLength={6}
+                autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
               />
             </div>
+
+            {/* REMEMBER ME & FORGOT PASSWORD ROW */}
+            {authMode === 'login' && (
+              <div className="auth-helpers">
+                <label className="remember-me">
+                  <input type="checkbox" defaultChecked />
+                  <span>Remember me</span>
+                </label>
+                <button type="button" className="forgot-password">
+                  Forgot password?
+                </button>
+              </div>
+            )}
             
             <button type="submit" className="submit-btn" disabled={isLoading}>
               {isLoading ? 'PROCESSING...' : (authMode === 'login' ? 'SIGN IN' : 'CREATE ACCOUNT')}
@@ -513,7 +555,7 @@ export default function AccountPage() {
                       
                       <div className="order-header">
                         <div>
-                          <p className="order-id">Order #{order.order_id}</p>
+                          <p className="order-id">Order #{order.order_number}</p>
                           <p className="order-date">{new Date(order.created_at).toLocaleDateString()}</p>
                         </div>
                         <span className={`order-status ${order.status.toLowerCase()}`}>
@@ -522,13 +564,15 @@ export default function AccountPage() {
                       </div>
                       
                       <div className="order-details">
-                        {order.items.map((item: any, index: number) => (
-                          <p key={index}>{item.quantity}x {item.name} ({item.size})</p>
+                        {order.order_items?.map((item: any) => (
+                          <p key={item.id}>
+                            {item.quantity}x {item.product_name} <span className="text-gray-500">({item.size})</span>
+                          </p>
                         ))}
                       </div>
                       
                       <div className="order-footer">
-                        <p className="order-total">Total: KSh {order.total}</p>
+                        <p className="order-total">Total: KSh {order.total_amount}</p>
                         <Link href="/shop" className="reorder-btn">Buy Again</Link>
                       </div>
                       
@@ -1169,6 +1213,45 @@ const DashboardStyles = () => (
     .reorder-btn:hover {
       background: #ffffff;
       color: #000000;
+    }
+
+    .auth-helpers {
+      display: block;
+      width: 100%;
+      margin-top: -0.5rem;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #9ca3af;
+      font-size: 0.875rem;
+      cursor: pointer;
+      margin-bottom: 1rem; 
+    }
+
+    .remember-me input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      accent-color: #788E7D;
+      cursor: pointer;
+    }
+
+    .forgot-password {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      font-size: 0.875rem;
+      cursor: pointer;
+      padding: 0;
+      display: block; 
+      text-align: left;
+    }
+
+    .forgot-password:hover {
+      color: #ffffff;
+      text-decoration: underline;
     }
   `}</style>
 );

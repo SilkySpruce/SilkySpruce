@@ -5,10 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ShoppingBag, User, X } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
+import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
 
 export default function Navbar() {
   const { items } = useCartStore();
+  const { user, isAuthenticated } = useUserStore();
   const [mounted, setMounted] = useState(false);
   
   // Search State
@@ -16,7 +18,6 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   
-  // Wait until hydration is complete to read local storage
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -24,7 +25,6 @@ export default function Navbar() {
   // Debounced Supabase Search
   useEffect(() => {
     const fetchResults = async () => {
-      // Only search if the user has typed at least 2 characters
       if (searchQuery.trim().length < 2) {
         setSearchResults([]);
         return;
@@ -34,12 +34,11 @@ export default function Navbar() {
         .from('products')
         .select('id, name, slug, featured_image, category')
         .or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`)
-        .limit(5); // Show top 5 autocomplete results
+        .limit(5); 
         
       if (data) setSearchResults(data);
     };
 
-    // Wait 300ms after the user stops typing before fetching
     const debounceTimer = setTimeout(fetchResults, 300);
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
@@ -51,10 +50,12 @@ export default function Navbar() {
     setSearchQuery('');
   };
 
+  const isAdmin = mounted && isAuthenticated && user?.email === 'fountaincreations@gmail.com';
+
   return (
     <nav className="w-full border-b border-[#2A2A2A] bg-[#111111] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
       
-      {/* Logo */}
+      {/* Logo - Fixed Image Aspect Ratio Warning */}
       <Link href="/" className="flex-shrink-0" onClick={closeSearch}>
         <Image 
           src="/products/Silky Logo.png" 
@@ -62,6 +63,7 @@ export default function Navbar() {
           width={120} 
           height={40} 
           className="object-contain"
+          style={{ width: 'auto', height: 'auto' }}
         />
       </Link>
 
@@ -72,11 +74,17 @@ export default function Navbar() {
         <Link href="/faqs" className="text-sm font-semibold hover:text-gray-300 transition-colors">FAQs</Link>
         <Link href="/blog" className="text-sm font-semibold hover:text-gray-300 transition-colors">Blog</Link>
         <Link href="/contact-us" className="text-sm font-semibold hover:text-gray-300 transition-colors">Contact Us</Link>
+        
+        {/* Dynamic Admin Link */}
+        {isAdmin && (
+          <Link href="/admin" className="text-sm font-semibold text-[#788E7D] hover:text-[#687C6D] transition-colors border border-[#788E7D] px-3 py-1 rounded">
+            Admin
+          </Link>
+        )}
       </div>
 
       {/* Right Icons */}
       <div className="flex items-center space-x-6">
-        {/* Search Toggle */}
         <button 
           onClick={() => setIsSearchOpen(!isSearchOpen)} 
           className="hover:text-gray-300 transition-colors flex items-center justify-center"
@@ -84,7 +92,6 @@ export default function Navbar() {
           {isSearchOpen ? <X size={20} strokeWidth={1.5} /> : <Search size={20} strokeWidth={1.5} />}
         </button>
         
-        {/* Cart Icon with Badge */}
         <Link href="/cart" className="hover:text-gray-300 transition-colors relative flex items-center" onClick={closeSearch}>
           <ShoppingBag size={20} strokeWidth={1.5} />
           {mounted && cartItemCount > 0 && (
@@ -115,7 +122,6 @@ export default function Navbar() {
             />
           </div>
 
-          {/* Autocomplete Results */}
           {searchResults.length > 0 && (
             <div className="w-full max-w-2xl mt-4 flex flex-col gap-2">
               {searchResults.map(product => (
@@ -146,7 +152,6 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* No Results State */}
           {searchQuery.trim().length >= 2 && searchResults.length === 0 && (
             <p className="text-gray-500 mt-6 text-sm">No rituals found for "{searchQuery}"</p>
           )}
