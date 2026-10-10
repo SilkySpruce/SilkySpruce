@@ -311,11 +311,8 @@ useEffect(() => {
               <div className="auth-helpers">
                 <label className="remember-me">
                   <input type="checkbox" defaultChecked />
-                  <span>Remember me</span>
+                  <span> Remember me</span>
                 </label>
-                <button type="button" className="forgot-password">
-                  Forgot password?
-                </button>
               </div>
             )}
             

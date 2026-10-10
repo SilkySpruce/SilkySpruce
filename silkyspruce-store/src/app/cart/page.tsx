@@ -8,76 +8,185 @@ import { useCartStore } from '@/store/cartStore';
 import { processCheckout } from '../actions/processCheckout';
 import { useUserStore } from '@/store/userStore';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import dynamic from 'next/dynamic';
+
+const PaystackButton = dynamic(() => import('@/components/PaystackButton'), { ssr: false });
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart } = useCartStore();
   const [usePoints, setUsePoints] = useState(false);
+  
+  // Address State Management
+  const [savedAddress, setSavedAddress] = useState<string | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(true);
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+  const [shippingDetails, setShippingDetails] = useState({
+    country: "Kenya",
+    city: "",
+    street: "",
+    apartment: ""
+  });
+
   const { user } = useUserStore();
   const router = useRouter();
-
-  // Hydration fix for Zustand + Next.js
   const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => setIsMounted(true), []);
+  
+  useEffect(() => {
+    setIsMounted(true);
 
-const handleCheckout = async () => {
-    if (items.length === 0) return alert("Your cart is empty!");
-
-    const isSimulating = process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true';
-
-    if (isSimulating) {
-      const isSuccess = window.confirm(
-        "SANDBOX MODE: Click 'OK' to simulate a SUCCESSFUL payment."
-      );
-      
-      if (isSuccess) {
-        // 1. Calculate max points they are allowed to use (can't exceed subtotal)
-        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
-        const pointsApplied = usePoints ? maxPoints : 0;
-
-        // 2. Package all the data to send to the backend
-        const checkoutPayload = {
-          userId: user?.id,
-          pointsUsed: pointsApplied, 
-          customer: {
-            firstName: user?.firstName || "Guest",
-            lastName: user?.lastName || "User",
-            email: user?.email || "fountaincreations@gmail.com",
-            phone: user?.phone || "+254700000000",
-            address: "123 Test Ave, Nairobi, Kenya"
-          },
-          items: items.map(item => ({
-            id: item.id,
-            name: item.name,
-            size: item.size || 'Standard',
-            quantity: item.quantity,
-            price: item.price
-          }))
-        };
-
-        alert("Payment successful! Processing order...");
-        
-        // 3. Send the payload to our secure Server Action
-        const result = await processCheckout(checkoutPayload);
-
-        if (result.success) {
-          alert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned} loyalty points.`);
-          clearCart();
-          router.push('/account')
-        } else {
-          alert(`Error: ${result.error}`);
+    const fetchSavedAddress = async () => {
+      if (user?.id) {
+        setIsFetchingAddress(true);
+        const { data, error } = await supabase
+          .from('user_addresses') 
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_default', true) 
+          .maybeSingle();
+          
+        if (!error && data) {
+          setShippingDetails({
+            country: data.country || "Kenya",
+            city: data.city || "",
+            street: data.street_address || data.address_line_1 || "", 
+            apartment: data.apartment || ""
+          });
+          setSavedAddress(`${data.street_address || data.address_line_1}, ${data.city}`);
+          setUseNewAddress(false);
+        } else if (error) {
+          console.error("Address fetch error:", error?.message);
         }
+        setIsFetchingAddress(false);
       }
-    } else {
-      alert("Initiating secure payment gateway connection...");
-    }
-  };
+    };
 
-  if (!isMounted) return <div className="loading-state">Loading ritual...</div>;
+    fetchSavedAddress();
+  }, [user]);
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = subtotal > 10000 ? 0 : 500;
   const total = subtotal + (items.length > 0 ? shipping : 0);
+
+  const getFinalAddress = () => {
+    if (!useNewAddress && savedAddress) return savedAddress;
+    return `${shippingDetails.street}${shippingDetails.apartment ? `, ${shippingDetails.apartment}` : ''}, ${shippingDetails.city}, ${shippingDetails.country}`;
+  };
+
+  const config = {
+    reference: `ORD-${new Date().getTime()}`,
+    email: user?.email || "guest@silkyspruce.co.ke",
+    amount: total * 100, 
+    currency: 'KES',
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+  };
+
+  const validateCheckout = () => {
+    if (items.length === 0) {
+      alert("Your cart is empty!");
+      return false;
+    }
+    if (useNewAddress && (!shippingDetails.city || !shippingDetails.street)) {
+      alert("Please complete all required shipping fields before proceeding.");
+      return false;
+    }
+    return true;
+  };
+
+  const onSuccess = async () => {
+    const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
+    const pointsApplied = usePoints ? maxPoints : 0;
+    const finalAddress = getFinalAddress();
+
+    const checkoutPayload = {
+      userId: user?.id,
+      pointsUsed: pointsApplied, 
+      customer: {
+        firstName: user?.firstName || "Guest",
+        lastName: user?.lastName || "User",
+        email: user?.email || "guest@silkyspruce.co.ke",
+        phone: user?.phone || "+254700000000",
+        address: finalAddress
+      },
+      items: items.map(item => ({
+        id: item.id,
+        name: item.name,
+        size: item.size || 'Standard',
+        quantity: item.quantity,
+        price: item.price
+      }))
+    };
+    
+    alert("Payment successful! Saving your order...");
+    const result = await processCheckout(checkoutPayload);
+
+    if (result.success) {
+      alert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`);
+      
+      if (user) {
+        useUserStore.setState({ 
+          user: { ...user, loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + (result.pointsEarned || 0) } 
+        });
+      }
+
+      clearCart();
+      router.push('/account');
+    } else {
+      alert(`Payment succeeded, but order creation failed: ${result.error}`);
+    }
+  };
+
+  const onClose = () => {
+    alert("Payment cancelled. Your cart is saved.");
+  };
+
+  const handleSandboxCheckout = async () => {
+    if (!validateCheckout()) return;
+
+    const isSuccess = window.confirm("SANDBOX MODE: Click 'OK' to simulate a SUCCESSFUL payment.");
+    if (isSuccess) {
+      const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
+      const pointsApplied = usePoints ? maxPoints : 0;
+      const finalAddress = getFinalAddress();
+
+      const checkoutPayload = {
+        userId: user?.id,
+        pointsUsed: pointsApplied, 
+        customer: {
+          firstName: user?.firstName || "Guest",
+          lastName: user?.lastName || "User",
+          email: user?.email || "guest@silkyspruce.co.ke",
+          phone: user?.phone || "+254700000000",
+          address: finalAddress
+        },
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          size: item.size || 'Standard',
+          quantity: item.quantity,
+          price: item.price
+        }))
+      };
+
+      alert("Processing sandbox order...");
+      const result = await processCheckout(checkoutPayload);
+
+      if (result.success) {
+        alert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned} loyalty points.`);
+        if (user) {
+          useUserStore.setState({ 
+            user: { ...user, loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + (result.pointsEarned || 0) } 
+          });
+        }
+        clearCart();
+        router.push('/account');
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    }
+  };
+
+  if (!isMounted) return <div className="loading-state">Loading ritual...</div>;
 
   if (items.length === 0) {
     return (
@@ -90,13 +199,24 @@ const handleCheckout = async () => {
     );
   }
 
+  const inputStyle = { 
+    width: '100%', 
+    boxSizing: 'border-box' as const, 
+    padding: '0.75rem', 
+    background: '#1A1A1A', 
+    border: '1px solid #2A2A2A', 
+    color: 'white', 
+    borderRadius: 0,
+    outline: 'none'
+  };
+
   return (
     <div className="cart-container">
       <h1 className="cart-title">Your Cart</h1>
 
       <div className="cart-layout">
         
-        {/* LEFT COLUMN: ITEMS & SECURE CHECKOUT BADGES */}
+        {/* LEFT COLUMN */}
         <div className="cart-main">
           
           <div className="cart-items-header">
@@ -117,7 +237,6 @@ const handleCheckout = async () => {
                     <p className="item-size">Size: {item.size === 'Default Title' ? 'Standard' : item.size}</p>
                     <p className="item-price-mobile">KSh {item.price}</p>
                     
-                    {/* Mobile Quantity Control */}
                     <div className="qty-controls mobile-qty">
                       <button onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
                       <span>{item.quantity}</span>
@@ -126,7 +245,6 @@ const handleCheckout = async () => {
                   </div>
                 </div>
 
-                {/* Desktop Quantity Control */}
                 <div className="qty-controls hidden-mobile">
                   <button onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
                   <span>{item.quantity}</span>
@@ -137,34 +255,24 @@ const handleCheckout = async () => {
                   <p>KSh {item.price * item.quantity}</p>
                 </div>
 
-                <button className="remove-btn" onClick={() => removeItem(item.id)} aria-label="Remove item">
+                <button className="remove-btn" onClick={() => removeItem(item.id)}>
                   <Trash2 size={18} />
                 </button>
               </div>
             ))}
           </div>
 
-          {/* Secure Payment Badges */}
           <div className="payment-security-block">
             <h3><ShieldCheck size={18} className="shield-icon" /> Secure Checkout</h3>
             <p>We accept local and international payment methods.</p>
             <div className="payment-methods">
-              <div className="payment-badge">
-                <Smartphone size={24} />
-                <span>M-Pesa / Airtel</span>
-              </div>
-              <div className="payment-badge">
-                <CreditCard size={24} />
-                <span>Visa / Mastercard</span>
-              </div>
-              <div className="payment-badge">
-                <span className="paypal-text">PayPal</span>
-              </div>
+              <div className="payment-badge"><Smartphone size={24} /><span>M-Pesa / Airtel</span></div>
+              <div className="payment-badge"><CreditCard size={24} /><span>Visa / Mastercard</span></div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: ORDER SUMMARY */}
+        {/* RIGHT COLUMN */}
         <aside className="cart-sidebar">
           <div className="summary-card">
             <h2 className="summary-title">Order Summary</h2>
@@ -173,10 +281,100 @@ const handleCheckout = async () => {
               <span>Subtotal</span>
               <span>KSh {subtotal}</span>
             </div>
-            
             <div className="summary-row">
               <span>Delivery</span>
               <span>{shipping === 0 ? 'Free' : `KSh ${shipping}`}</span>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem', borderTop: '1px solid #2A2A2A', paddingTop: '1.5rem' }}>
+              <h3 style={{ fontSize: '1rem', color: '#ffffff', marginBottom: '1rem' }}>Shipping Address</h3>
+
+              {isFetchingAddress ? (
+                <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>Loading saved address...</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  
+                  {savedAddress && (
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" name="address_choice" checked={!useNewAddress}
+                        onChange={() => setUseNewAddress(false)}
+                        style={{ marginTop: '0.25rem', accentColor: '#788E7D' }}
+                      />
+                      <div>
+                        <span style={{ display: 'block', color: '#ffffff', fontSize: '0.875rem', fontWeight: 500 }}>Use Saved Address</span>
+                        <span style={{ display: 'block', color: '#9ca3af', fontSize: '0.875rem', marginTop: '0.25rem', lineHeight: '1.4' }}>{savedAddress}</span>
+                      </div>
+                    </label>
+                  )}
+
+                  {savedAddress && (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" name="address_choice" checked={useNewAddress}
+                        onChange={() => setUseNewAddress(true)}
+                        style={{ accentColor: '#788E7D' }}
+                      />
+                      <span style={{ color: '#ffffff', fontSize: '0.875rem', fontWeight: 500 }}>Ship to a different address</span>
+                    </label>
+                  )}
+
+                  {useNewAddress && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: savedAddress ? '0.5rem' : '0' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <label style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase' }}>Country</label>
+                          <select 
+                            value={shippingDetails.country}
+                            onChange={(e) => setShippingDetails({...shippingDetails, country: e.target.value})}
+                            style={inputStyle}
+                          >
+                            <option value="Kenya">Kenya</option>
+                            <option value="Uganda">Uganda</option>
+                            <option value="Tanzania">Tanzania</option>
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <label style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase' }}>City / Region</label>
+                          <select 
+                            value={shippingDetails.city}
+                            onChange={(e) => setShippingDetails({...shippingDetails, city: e.target.value})}
+                            style={inputStyle}
+                          >
+                            <option value="" disabled>Select City...</option>
+                            <option value="Nairobi">Nairobi</option>
+                            <option value="Mombasa">Mombasa</option>
+                            <option value="Kisumu">Kisumu</option>
+                            <option value="Nakuru">Nakuru</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase' }}>Street Address</label>
+                        <input 
+                          type="text" value={shippingDetails.street}
+                          onChange={(e) => setShippingDetails({...shippingDetails, street: e.target.value})}
+                          placeholder="e.g. 123 Moi Avenue"
+                          style={{...inputStyle, background: 'transparent'}}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase' }}>Apt, Suite (Optional)</label>
+                        <input 
+                          type="text" value={shippingDetails.apartment}
+                          onChange={(e) => setShippingDetails({...shippingDetails, apartment: e.target.value})}
+                          placeholder="e.g. Apt 4B, 2nd Floor"
+                          style={{...inputStyle, background: 'transparent'}}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="summary-total">
@@ -184,9 +382,20 @@ const handleCheckout = async () => {
               <span>KSh {total}</span>
             </div>
 
-            <button className="checkout-btn" onClick={handleCheckout}>
-              PROCEED TO CHECKOUT
-            </button>
+            {process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true' ? (
+              <button className="checkout-btn" onClick={handleSandboxCheckout}>
+                PROCEED TO CHECKOUT (SANDBOX)
+              </button>
+            ) : (
+              <PaystackButton 
+                config={config} 
+                onSuccess={onSuccess} 
+                onClose={onClose} 
+                onValidation={validateCheckout}
+                className="checkout-btn"
+                text="PROCEED TO CHECKOUT"
+              />
+            )}
             
             <p className="checkout-terms">
               Taxes and international shipping calculated at checkout.

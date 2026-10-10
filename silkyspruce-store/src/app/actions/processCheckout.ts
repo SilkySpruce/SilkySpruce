@@ -31,32 +31,48 @@ interface CheckoutPayload {
 
 export async function processCheckout(payload: CheckoutPayload) {
   try {
+    let finalAddress = payload.customer.address;
+
     // -----------------------------------------------------------------
-    // 1. INVENTORY VERIFICATION
+    // 0. FETCH USER ADDRESS FROM DB (IF LOGGED IN)
     // -----------------------------------------------------------------
-    const productNames = payload.items.map(item => item.name);
+    if (payload.userId) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('address')
+        .eq('id', payload.userId)
+        .single();
+        
+      if (profile?.address) {
+        finalAddress = profile.address;
+      }
+    }
+
+    // -----------------------------------------------------------------
+    // 1. INVENTORY VERIFICATION (Targeting product_variants)
+    // -----------------------------------------------------------------
+    const variantIds = payload.items.map(item => item.id);
     
-    // Using supabaseAdmin everywhere to ensure it never gets blocked
     const { data: stockData, error: stockError } = await supabaseAdmin
-      .from('products')
-      .select('id, name, stock')
-      .in('name', productNames);
+      .from('product_variants')
+      .select('id, stock_quantity')
+      .in('id', variantIds);
 
     if (stockError || !stockData) {
       throw new Error(`Inventory check failed: ${stockError?.message}`);
     }
 
     for (const cartItem of payload.items) {
-      const dbProduct = stockData.find(p => p.name === cartItem.name);
+      const dbVariant = stockData.find(v => v.id === cartItem.id);
       
-      if (!dbProduct) {
-        return { success: false, error: `${cartItem.name} is no longer available.` };
+      if (!dbVariant) {
+        return { success: false, error: `${cartItem.name} (${cartItem.size}) is no longer available.` };
       }
       
-      if (dbProduct.stock < cartItem.quantity) {
+      if (dbVariant.stock_quantity < cartItem.quantity) {
         return { 
           success: false, 
-          error: `We only have ${dbProduct.stock} left in stock for ${cartItem.name}. Please reduce the quantity in your cart.` 
+          error: `We only have ${dbVariant.stock_quantity} left in stock for ${cartItem.name} (${cartItem.size}). Please reduce the quantity.` 
         };
       }
     }
@@ -79,7 +95,7 @@ export async function processCheckout(payload: CheckoutPayload) {
         customer_name: `${payload.customer.firstName} ${payload.customer.lastName}`,
         customer_email: payload.customer.email,
         customer_phone: payload.customer.phone,
-        shipping_address: payload.customer.address,
+        shipping_address: finalAddress, 
         subtotal: subtotal,
         shipping_fee: shippingFee,
         total_amount: totalAmount,
@@ -108,12 +124,13 @@ export async function processCheckout(payload: CheckoutPayload) {
     if (itemsError) throw new Error(`Failed to save items: ${itemsError?.message}`);
 
     for (const item of payload.items) {
-      const dbProduct = stockData.find(p => p.name === item.name);
-      if (dbProduct) {
-        await supabaseAdmin.rpc('decrement_stock', {
-          p_id: dbProduct.id,
-          q_deduct: item.quantity
-        });
+      const dbVariant = stockData.find(v => v.id === item.id);
+      if (dbVariant) {
+        // Direct update to product_variants stock
+        await supabaseAdmin
+          .from('product_variants')
+          .update({ stock_quantity: dbVariant.stock_quantity - item.quantity })
+          .eq('id', dbVariant.id);
       }
     }
 
@@ -125,20 +142,22 @@ export async function processCheckout(payload: CheckoutPayload) {
         .from('profiles')
         .select('loyalty_points')
         .eq('id', payload.userId)
-        .single();
+        .maybeSingle();
       
       const currentPoints = profile?.loyalty_points || 0;
       const newBalance = currentPoints - payload.pointsUsed + pointsEarned;
 
       await supabaseAdmin
         .from('profiles')
-        .update({ loyalty_points: newBalance })
-        .eq('id', payload.userId);
+        .upsert({ 
+          id: payload.userId, 
+          loyalty_points: newBalance 
+        }, { onConflict: 'id' });
     }
 
     await sendOrderEmails({
       orderId: orderNumber,
-      customer: payload.customer,
+      customer: { ...payload.customer, address: finalAddress },
       items: payload.items,
       total: totalAmount,
       shipping: shippingFee
