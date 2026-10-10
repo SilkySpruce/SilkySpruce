@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ShoppingBag, User, X } from 'lucide-react';
+import { Search, ShoppingBag, User, X, Home as HomeIcon } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
@@ -55,23 +55,32 @@ export default function Navbar() {
   return (
     <nav className="w-full border-b border-[#2A2A2A] bg-[#111111] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
       
-      {/* Logo - Fixed Image Aspect Ratio Warning */}
-      <Link href="/" className="flex-shrink-0" onClick={closeSearch}>
-        <Image 
-          src="/products/Silky Logo.png" 
-          alt="Silky Spruce Logo" 
-          width={120} 
-          height={40} 
-          className="object-contain"
-          style={{ width: 'auto', height: 'auto' }}
-        />
-      </Link>
+      {/* Logo & Mobile Home Icon */}
+      <div className="flex items-center gap-4 flex-shrink-0">
+        <Link href="/" className="md:hidden text-white hover:text-gray-300 transition-colors" onClick={closeSearch}>
+          <HomeIcon size={20} strokeWidth={1.5} />
+        </Link>
+        <Link href="/" onClick={closeSearch}>
+          <Image 
+            src="/products/Silky Logo.png" 
+            alt="Silky Spruce Logo" 
+            width={120} 
+            height={40} 
+            className="object-contain"
+            style={{ width: 'auto', height: 'auto' }}
+          />
+        </Link>
+      </div>
 
       {/* Center Navigation Links */}
       <div className="hidden md:flex items-center space-x-8">
+        <Link href="/" className="text-sm font-semibold hover:text-gray-300 transition-colors flex items-center gap-1.5">
+          <HomeIcon size={16} strokeWidth={1.5} /> Home
+        </Link>
         <Link href="/shop" className="text-sm font-semibold hover:text-gray-300 transition-colors">Collection</Link>
         <Link href="/about-us" className="text-sm font-semibold hover:text-gray-300 transition-colors">About Us</Link>
         <Link href="/faqs" className="text-sm font-semibold hover:text-gray-300 transition-colors">FAQs</Link>
+        <Link href="/how-to-use" className="text-sm font-semibold hover:text-gray-300 transition-colors">How To Use</Link>
         <Link href="/blog" className="text-sm font-semibold hover:text-gray-300 transition-colors">Blog</Link>
         <Link href="/contact-us" className="text-sm font-semibold hover:text-gray-300 transition-colors">Contact Us</Link>
         

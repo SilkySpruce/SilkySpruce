@@ -64,7 +64,7 @@ export default function Home() {
         <div className="hero-content">
           <p className="hero-subtitle">Pure • Plant-Based • Handcrafted</p>
           <h1 className="hero-title">Nature's Touch for Sensitive Skin</h1>
-          <Link href="#how-to-guides" className="hero-button">
+          <Link href="/how-to-use" className="hero-button">
             HOW-TO GUIDES
           </Link>
         </div>
@@ -155,7 +155,7 @@ export default function Home() {
                 <span className="tag">Rosehip Oil</span>
               </div>
             </div>
-            <Link href="/blog" className="view-all-link">
+            <Link href="/how-to-use/body-oils-hydration" className="view-all-link">
               Read Full Guide →
             </Link>
           </div>

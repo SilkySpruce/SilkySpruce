@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck } from 'lucide-react';
+import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { processCheckout } from '../actions/processCheckout';
 import { useUserStore } from '@/store/userStore';
@@ -64,9 +64,15 @@ export default function CartPage() {
     fetchSavedAddress();
   }, [user]);
 
+  // Dynamic Totals Calculation
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = subtotal > 10000 ? 0 : 500;
-  const total = subtotal + (items.length > 0 ? shipping : 0);
+  
+  // Calculate max points they can use (can't exceed subtotal)
+  const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
+  const pointsApplied = usePoints ? maxPoints : 0;
+  
+  const total = subtotal - pointsApplied + (items.length > 0 ? shipping : 0);
 
   const getFinalAddress = () => {
     if (!useNewAddress && savedAddress) return savedAddress;
@@ -94,8 +100,6 @@ export default function CartPage() {
   };
 
   const onSuccess = async () => {
-    const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
-    const pointsApplied = usePoints ? maxPoints : 0;
     const finalAddress = getFinalAddress();
 
     const checkoutPayload = {
@@ -145,8 +149,6 @@ export default function CartPage() {
 
     const isSuccess = window.confirm("SANDBOX MODE: Click 'OK' to simulate a SUCCESSFUL payment.");
     if (isSuccess) {
-      const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
-      const pointsApplied = usePoints ? maxPoints : 0;
       const finalAddress = getFinalAddress();
 
       const checkoutPayload = {
@@ -281,7 +283,26 @@ export default function CartPage() {
               <span>Subtotal</span>
               <span>KSh {subtotal}</span>
             </div>
-            <div className="summary-row">
+
+            {/* LOYALTY POINTS UI */}
+            {user && (user.loyaltyPoints || 0) > 0 && (
+              <div className="summary-row" style={{ alignItems: 'center', borderBottom: '1px solid #2A2A2A', paddingBottom: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', color: '#788E7D', fontWeight: 500 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={usePoints} 
+                    onChange={(e) => setUsePoints(e.target.checked)} 
+                    style={{ accentColor: '#788E7D', width: '1.125rem', height: '1.125rem', cursor: 'pointer' }}
+                  />
+                  <Gift size={16} /> Use Points ({user.loyaltyPoints})
+                </label>
+                {usePoints && (
+                  <span style={{ color: '#788E7D', fontWeight: 600 }}>- KSh {pointsApplied}</span>
+                )}
+              </div>
+            )}
+            
+            <div className="summary-row" style={{ marginTop: '1rem' }}>
               <span>Delivery</span>
               <span>{shipping === 0 ? 'Free' : `KSh ${shipping}`}</span>
             </div>
