@@ -1,22 +1,77 @@
 "use client";
 
-import { usePaystackPayment } from 'react-paystack';
+import React, { useEffect, useState } from 'react';
 
-export default function PaystackButton({ config, onSuccess, onClose, onValidation, className, text }: any) {
-  const initializePayment = usePaystackPayment(config);
+interface PaystackConfig {
+  reference: string;
+  email: string;
+  amount: number;
+  currency?: string;
+  publicKey: string;
+  metadata?: any;
+}
 
-  const handleClick = () => {
-    // Run the address validation from the cart page first
-    if (onValidation && !onValidation()) {
-      return; 
+interface PaystackButtonProps {
+  config: PaystackConfig;
+  onSuccess: (reference: any) => void;
+  onClose: () => void;
+  onValidation: () => boolean;
+  className?: string;
+  text: string;
+}
+
+export default function PaystackButton({
+  config,
+  onSuccess,
+  onClose,
+  onValidation,
+  className,
+  text,
+}: PaystackButtonProps) {
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.async = true;
+    script.onload = () => setScriptLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, []);
+
+  const handlePaystackClick = () => {
+    if (!onValidation()) return;
+
+    if (!scriptLoaded || !(window as any).PaystackPop) {
+      alert('Paystack SDK failed to load. Please check your connection.');
+      return;
     }
-    // If validation passes, pop open Paystack!
-    initializePayment({ onSuccess, onClose } as any);
+
+    const handler = (window as any).PaystackPop.setup({
+      key: config.publicKey,
+      email: config.email,
+      amount: config.amount,
+      currency: config.currency || 'KES',
+      ref: config.reference,
+      callback: function (response: any) {
+        onSuccess(response);
+      },
+      onClose: function () {
+        onClose();
+      },
+    });
+
+    handler.openIframe();
   };
 
   return (
-    <button className={className} onClick={handleClick}>
-      {text || "PROCEED TO CHECKOUT"}
+    <button type="button" onClick={handlePaystackClick} className={className}>
+      {text}
     </button>
   );
 }
