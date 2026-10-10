@@ -12,13 +12,13 @@ export default function ProductClient({ slug }: { slug: string }) {
   const [selectedVariation, setSelectedVariation] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [isExpanded, setIsExpanded] = useState(false); // <-- Added state for Read More
   
   const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
     const fetchProduct = async () => {
       setIsLoading(true);
-      // Join the tables: get the product AND all its linked variants
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -26,12 +26,11 @@ export default function ProductClient({ slug }: { slug: string }) {
           product_variants (*)
         `)
         .eq('slug', slug)
-        .single(); // Back to single, because we are looking up ONE product!
+        .single(); 
 
       if (data) {
         setProduct(data);
         
-        // Grab the variants array, sort by price, and set the default
         if (data.product_variants && data.product_variants.length > 0) {
           const sortedVariants = data.product_variants.sort((a: any, b: any) => a.price - b.price);
           setVariations(sortedVariants);
@@ -50,7 +49,7 @@ export default function ProductClient({ slug }: { slug: string }) {
     if (!product || !selectedVariation) return;
     
     addItem({
-      id: selectedVariation.id, // Save the variant ID for accurate stock deduction
+      id: selectedVariation.id,
       productId: product.id,
       slug: product.slug,
       name: product.name,
@@ -81,6 +80,11 @@ export default function ProductClient({ slug }: { slug: string }) {
       </div>
     );
   }
+
+  // Safely extract descriptions
+  const shortDesc = product.short_description || "";
+  const longDesc = product.long_description || "";
+  const hasLongDesc = longDesc.trim().length > 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
@@ -115,8 +119,28 @@ export default function ProductClient({ slug }: { slug: string }) {
             <>
               <p className="text-2xl text-[#788E7D] mb-6">KSh {selectedVariation.price}</p>
               
+              {/* EXPANDABLE DESCRIPTION */}
               <div className="text-gray-400 mb-8 leading-relaxed whitespace-pre-wrap">
-                {product.description}
+                {!isExpanded ? (
+                  <p>
+                    {shortDesc}
+                    {hasLongDesc && "..."}
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <p>{shortDesc}</p>
+                    <p>{longDesc}</p>
+                  </div>
+                )}
+
+                {hasLongDesc && (
+                  <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="text-white text-sm font-semibold underline mt-3 block hover:text-[#788E7D] transition"
+                  >
+                    {isExpanded ? "Show Less" : "Read More"}
+                  </button>
+                )}
               </div>
 
               {/* DYNAMIC VARIATION SELECTOR */}

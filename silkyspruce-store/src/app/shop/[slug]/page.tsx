@@ -10,10 +10,11 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await params; 
 
+  // FIXED: Querying correct column names from the database
   const { data: products } = await supabase
     .from('products')
-    .select('name, description, featured_image')
-    .eq('slug', slug) // <-- Use the unwrapped slug
+    .select('name, short_description, long_description, featured_image')
+    .eq('slug', slug)
     .limit(1);
 
   const product = products?.[0];
@@ -23,9 +24,10 @@ export async function generateMetadata(
   }
 
   const previousImages = (await parent).openGraph?.images || [];
-  const cleanDescription = product.description 
-    ? product.description.replace(/<[^>]*>?/gm, '').substring(0, 160) + '...'
-    : 'Discover our botanical skincare collection.';
+  
+  // Use short_description for the SEO preview, fallback to long_description
+  const baseDescription = product.short_description || product.long_description || 'Discover our botanical skincare collection.';
+  const cleanDescription = baseDescription.replace(/<[^>]*>?/gm, '').substring(0, 160) + '...';
 
   return {
     title: product.name,
