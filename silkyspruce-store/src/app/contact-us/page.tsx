@@ -29,9 +29,9 @@ export default function ContactUsPage() {
       
       <div className="contact-header">
         <p className="contact-subtitle">Get in Touch</p>
-        <h1 className="contact-title">Let's Connect</h1>
+        <h1 className="contact-title">Connect With Us</h1>
         <p className="contact-description">
-          Whether you have a question about a specific plant-based ingredient, need help with your daily routine, or just want to say hello — we're always here for you.
+          Whether you have a question about a specific plant based ingredient, require assistance with your daily routine, or simply wish to say hello, we are always here for you.
         </p>
       </div>
 

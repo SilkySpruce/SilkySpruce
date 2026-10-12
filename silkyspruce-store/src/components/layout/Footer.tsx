@@ -27,7 +27,7 @@ export default function Footer() {
       
       <div className="footer-content">
         <h4 className="footer-subtitle">
-          Join the Ritual
+          Join the Community
         </h4>
         
         <h2 className="footer-title">
@@ -35,7 +35,7 @@ export default function Footer() {
         </h2>
         
         <p className="footer-description">
-          Get how-to guides, ingredient spotlights, and early access to new collections — straight to your inbox.
+          Get how to guides, ingredient spotlights, and early access to new collections straight to your inbox.
         </p>
 
         {/* Dynamic Subscription Form Area */}
@@ -70,7 +70,7 @@ export default function Footer() {
 
         {/* WHATSAPP TRIBE LINK */}
         <div className="whatsapp-section">
-          <p className="whatsapp-text">Prefer instant updates and exclusive discount drops?</p>
+          <p className="whatsapp-text">Do you prefer instant updates and exclusive discount drops?</p>
           <a 
             href="https://chat.whatsapp.com/GuOXq6nHqdQG0dFMrzpxkp?s=cl&p=a&mlu=4&ilr=4" 
             target="_blank" 

@@ -54,7 +54,7 @@ export default function ShopPage() {
       <div className="shop-header">
         <h1 className="shop-title">The Collection</h1>
         <p className="shop-description">
-          Handcrafted botanical remedies sourced from nature. Filter by category to find your perfect ritual.
+          Handcrafted plant based remedies sourced from nature. Filter by category to find your perfect routine.
         </p>
       </div>
 

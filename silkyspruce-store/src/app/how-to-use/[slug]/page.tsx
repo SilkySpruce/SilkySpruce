@@ -8,12 +8,12 @@ const GUIDE_CONTENT: Record<string, any> = {
     coverImage: "/products/Rose water 250ml.jpeg",
     content: (
       <>
-        <p>The secret is in the application - discover the damp-skin method that locks in moisture for 24 hours and leaves skin visibly luminous.</p>
+        <p>The secret is in the application. Discover the damp skin method that locks in moisture for 24 hours and leaves skin visibly bright.</p>
         <h3>How to use:</h3>
         <ul>
-          <li>✔ Add a few drops to a diffuser for a clean, uplifting atmosphere.</li>
-          <li>✔ Blend with carrier oils for an invigorating massage or skincare ritual.</li>
-          <li>✔ Mix into DIY sprays, soaps, or cleaners for a fresh touch.</li>
+          <li>Add a few drops to a diffuser for a clean and uplifting atmosphere.</li>
+          <li>Blend with carrier oils for a refreshing massage or skincare routine.</li>
+          <li>Mix into homemade sprays, soaps, or cleaners for a fresh touch.</li>
         </ul>
         <p><em>Texture: Smooth, cooling, and absorbs fast.</em></p>
       </>
@@ -24,15 +24,15 @@ const GUIDE_CONTENT: Record<string, any> = {
     coverImage: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/WhatsAppImage2025-06-05at5.27.21PM_1.jpg?v=1749195340",
     content: (
       <>
-        <p>Lightweight. Non-greasy. Skin-safe defense. Silky Spruce Sunscreen Cream offers broad-spectrum protection powered by nature. Formulated with mineral-based SPF, nourishing plant oils, and skin-soothing botanicals.</p>
+        <p>Lightweight. Non greasy. Safe defense for your skin. Silky Spruce Sunscreen Cream offers broad spectrum protection powered by nature. It is formulated with mineral based SPF, nourishing plant oils, and skin soothing plant extracts.</p>
         <h3>How to use:</h3>
         <ul>
-          <li>✔ Apply generously 15 minutes before sun exposure</li>
-          <li>✔ Reapply every 2 hours or after swimming or sweating</li>
-          <li>✔ Use daily—even on cloudy days—for full protection</li>
-          <li>✔ Works well as a base under makeup</li>
+          <li>Apply generously 15 minutes before sun exposure.</li>
+          <li>Reapply every two hours or after swimming or sweating.</li>
+          <li>Use daily for full protection, even on cloudy days.</li>
+          <li>Works well as a base under makeup.</li>
         </ul>
-        <p><em>Texture: Smooth, fast-absorbing, non-comedogenic</em></p>
+        <p><em>Texture: Smooth, fast absorbing, and will not block pores.</em></p>
       </>
     )
   },
@@ -41,14 +41,14 @@ const GUIDE_CONTENT: Record<string, any> = {
     coverImage: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/WhatsAppImage2025-07-17at12.29.53PM.jpg?v=1752750512",
     content: (
       <>
-        <p>Revive your roots. Restore your crown. Our Silky Spruce Hair Growth Gel is a lightweight, non-greasy formula crafted to stimulate hair growth while nourishing your scalp.</p>
+        <p>Revive your roots. Restore your crown. Our Silky Spruce Hair Growth Gel is a lightweight and non greasy formula. It is crafted to stimulate hair growth while nourishing your scalp.</p>
         <h3>How to use:</h3>
         <ul>
-          <li>✔ Apply a small amount directly to the scalp and massage gently.</li>
-          <li>✔ Use daily or as needed for targeted growth and moisture.</li>
-          <li>✔ Best for edges, thinning spots, and protective styles.</li>
+          <li>Apply a small amount directly to the scalp and massage gently.</li>
+          <li>Use daily or as needed for targeted growth and moisture.</li>
+          <li>Best for edges, thinning spots, and protective styles.</li>
         </ul>
-        <p><em>Scent: Fresh, herbal, and invigorating. Let your hair thrive naturally.</em></p>
+        <p><em>Scent: Fresh, herbal, and refreshing. Let your hair thrive naturally.</em></p>
       </>
     )
   },
@@ -57,15 +57,15 @@ const GUIDE_CONTENT: Record<string, any> = {
     coverImage: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/WhippedButter.jpg?v=1746896431",
     content: (
       <>
-        <p>Cool. Creamy. Refreshingly smooth. Treat your skin to a breath of fresh air with Silky Spruce Original Peppermint Whipped Body Butter. This rich, airy blend melts on contact.</p>
+        <p>Cool. Creamy. Refreshingly smooth. Treat your skin to a breath of fresh air with Silky Spruce Original Peppermint Whipped Body Butter. This rich and airy blend melts on contact.</p>
         <h3>How to use:</h3>
         <ul>
-          <li>✔ Apply after showering to lock in moisture</li>
-          <li>✔ Use on dry areas like hands, elbows, and feet</li>
-          <li>✔ Massage onto tired legs for a cooling effect</li>
-          <li>✔ Ideal for daily use—especially in warm weather</li>
+          <li>Apply after showering to lock in moisture.</li>
+          <li>Use on dry areas like hands, elbows, and feet.</li>
+          <li>Massage onto tired legs for a cooling effect.</li>
+          <li>Ideal for daily use, especially in warm weather.</li>
         </ul>
-        <p><em>Scent: Fresh, minty, and revitalizing.</em></p>
+        <p><em>Scent: Fresh, minty, and refreshing.</em></p>
       </>
     )
   }
@@ -187,7 +187,7 @@ export default async function HowToSinglePage({ params }: { params: Promise<{ sl
         .article-body ul {
           margin-bottom: 2rem;
           padding-left: 1.5rem;
-          list-style: none; /* Hide default bullets, we use custom checkmarks */
+          list-style-type: disc; 
         }
 
         .article-body li {

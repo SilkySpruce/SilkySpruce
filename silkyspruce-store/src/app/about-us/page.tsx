@@ -29,34 +29,34 @@ export default function AboutUsPage() {
           
           {/* Left: Text Content */}
           <div className="story-text-content">
-            <h2 className="story-heading">The heart behind Silky Spruce</h2>
+            <h2 className="story-heading">The Heart Behind Silky Spruce</h2>
             
             <p className="story-paragraph font-semibold">
               Our story begins with healing. Yours continues with care.
             </p>
             
             <p className="story-paragraph">
-              When I was diagnosed with Cutaneous Lupus Erythematosus (CLE), I struggled to find skincare that didn't hurt my skin.
+              When I was diagnosed with Cutaneous Lupus Erythematosus, I struggled to find skincare that did not hurt my skin.
             </p>
             
             <p className="story-paragraph">
-              So many products claimed to be "natural," yet they were filled with synthetic fragrances and harsh ingredients that caused more harm than help.
+              Many products claimed to be natural. However, they were filled with synthetic fragrances and harsh ingredients that caused more harm than good.
             </p>
             
             <p className="story-paragraph">
-              Out of this need, our company, Silky Spruce, was born — a woman-run business built by a mother and daughter team, united by care, resilience, and a shared vision of healing through nature.
+              Out of this need, our company Silky Spruce was born. We are a business run by women, built by a mother and daughter team. We are united by care, strength, and a shared vision of healing through nature.
             </p>
             
             <p className="story-paragraph">
-              Each formula is rooted in nature and shaped by personal experience. We focus on ingredients that nourish sensitive skin, soothe irritation, and bring comfort back to your daily care routine.
+              Each formula is rooted in nature and shaped by personal experience. We focus on ingredients that nourish sensitive skin, soothe irritation, and bring comfort back to your daily routine.
             </p>
             
             <p className="story-paragraph">
-              Silky Spruce exists for anyone who's ever felt overlooked by mainstream skincare. For those who want clean, thoughtful products made with care.
+              Silky Spruce exists for anyone who has ever felt overlooked by mainstream skincare. It is for those who want clean and thoughtful products made with care.
             </p>
             
             <p className="story-paragraph font-semibold mb-8">
-              Every jar is a return to nature. Every bottle is a step toward calm, resilient skin.
+              Every jar is a return to nature. Every bottle is a step toward calm and healthy skin.
             </p>
 
             <div className="founder-signature">
@@ -73,7 +73,7 @@ export default function AboutUsPage() {
                 src="/products/Cover picture1.jpeg.png" 
                 fill 
                 className="story-image" 
-                alt="Silky Spruce Product Collection with botanicals" 
+                alt="Silky Spruce Product Collection with plants" 
               />
             </div>
           </div>

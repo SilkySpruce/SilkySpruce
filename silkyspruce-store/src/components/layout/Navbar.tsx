@@ -86,14 +86,13 @@ export default function Navbar() {
             <Menu size={24} strokeWidth={1.5} />
           </button>
           
-          <Link href="/" onClick={closeSearch}>
+          <Link href="/" onClick={closeSearch} className="flex items-center">
             <Image 
               src="/products/Silky Logo.png" 
               alt="Silky Spruce Logo" 
               width={110} 
               height={36} 
-              className="object-contain"
-              style={{ width: 'auto', height: 'auto' }}
+              className="object-contain w-20 md:w-28 h-auto"
             />
           </Link>
         </div>
@@ -149,7 +148,7 @@ export default function Navbar() {
               <Search size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" strokeWidth={1.5} />
               <input
                 type="text"
-                placeholder="Search for botanicals, collections, or rituals..."
+                placeholder="Search for products or collections..."
                 className="w-full bg-transparent border border-[#2A2A2A] text-white px-12 py-4 outline-none focus:border-[#788E7D] transition-colors text-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -179,7 +178,7 @@ export default function Navbar() {
                     <div className="flex flex-col">
                       <h4 className="text-white font-semibold text-sm">{product.name}</h4>
                       <span className="text-gray-500 text-xs uppercase tracking-widest mt-1">
-                        {product.category?.split('>').pop() || 'Botanical'}
+                        {product.category?.split('>').pop() || 'Product'}
                       </span>
                     </div>
                   </Link>
@@ -188,14 +187,14 @@ export default function Navbar() {
             )}
 
             {searchQuery.trim().length >= 2 && searchResults.length === 0 && (
-              <p className="text-gray-500 mt-6 text-sm">No rituals found for "{searchQuery}"</p>
+              <p className="text-gray-500 mt-6 text-sm">No products found for "{searchQuery}"</p>
             )}
 
           </div>
         )}
       </nav>
 
-      {/* MOBILE FULL-SCREEN MENU */}
+      {/* REDESIGNED MOBILE FULL-SCREEN MENU */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-[#111111] flex flex-col px-8 py-6 md:hidden">
           
@@ -203,9 +202,9 @@ export default function Navbar() {
             <Image 
               src="/products/Silky Logo.png" 
               alt="Silky Spruce Logo" 
-              width={120} 
-              height={40} 
-              className="object-contain"
+              width={100} 
+              height={32} 
+              className="object-contain w-24 h-auto"
             />
             <button 
               onClick={closeMobileMenu}
@@ -215,34 +214,45 @@ export default function Navbar() {
             </button>
           </div>
 
-          <div className="flex flex-col space-y-8 overflow-y-auto pb-20">
-            <Link href="/" onClick={closeMobileMenu} className="text-2xl font-semibold text-white hover:text-[#788E7D] transition-colors">
+          <div className="flex flex-col space-y-6 overflow-y-auto pb-8 flex-grow">
+            <Link href="/" onClick={closeMobileMenu} className="text-lg font-medium text-white hover:text-[#788E7D] transition-colors">
               Home
             </Link>
-            <Link href="/shop" onClick={closeMobileMenu} className="text-2xl font-semibold text-white hover:text-[#788E7D] transition-colors">
+            <Link href="/shop" onClick={closeMobileMenu} className="text-lg font-medium text-white hover:text-[#788E7D] transition-colors">
               Collection
             </Link>
-            <Link href="/about-us" onClick={closeMobileMenu} className="text-2xl font-semibold text-white hover:text-[#788E7D] transition-colors">
+            <Link href="/about-us" onClick={closeMobileMenu} className="text-lg font-medium text-white hover:text-[#788E7D] transition-colors">
               About Us
             </Link>
-            <Link href="/faqs" onClick={closeMobileMenu} className="text-2xl font-semibold text-white hover:text-[#788E7D] transition-colors">
+            <Link href="/faqs" onClick={closeMobileMenu} className="text-lg font-medium text-white hover:text-[#788E7D] transition-colors">
               FAQs
             </Link>
-            <Link href="/how-to-use" onClick={closeMobileMenu} className="text-2xl font-semibold text-white hover:text-[#788E7D] transition-colors">
+            <Link href="/how-to-use" onClick={closeMobileMenu} className="text-lg font-medium text-white hover:text-[#788E7D] transition-colors">
               How To Use
             </Link>
-            <Link href="/blog" onClick={closeMobileMenu} className="text-2xl font-semibold text-white hover:text-[#788E7D] transition-colors">
+            <Link href="/blog" onClick={closeMobileMenu} className="text-lg font-medium text-white hover:text-[#788E7D] transition-colors">
               Blog
             </Link>
-            <Link href="/contact-us" onClick={closeMobileMenu} className="text-2xl font-semibold text-white hover:text-[#788E7D] transition-colors">
+            <Link href="/contact-us" onClick={closeMobileMenu} className="text-lg font-medium text-white hover:text-[#788E7D] transition-colors">
               Contact Us
             </Link>
             
             {isAdmin && (
-              <Link href="/admin" onClick={closeMobileMenu} className="text-2xl font-semibold text-[#788E7D] mt-4">
+              <Link href="/admin" onClick={closeMobileMenu} className="text-lg font-semibold text-[#788E7D] mt-4 pt-4 border-t border-[#2A2A2A]">
                 Admin Dashboard
               </Link>
             )}
+          </div>
+
+          {/* New Mobile Footer Contact Info */}
+          <div className="border-t border-[#2A2A2A] pt-6 mt-auto">
+            <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Get in touch</p>
+            <a href="mailto:fountaincreations@gmail.com" className="text-sm text-white hover:text-[#788E7D] block mb-1">
+              fountaincreations@gmail.com
+            </a>
+            <a href="tel:+254757225004" className="text-sm text-white hover:text-[#788E7D] block">
+              +254 757 225 004
+            </a>
           </div>
           
         </div>

@@ -4,14 +4,14 @@ const HOW_TO_GUIDES = [
   {
     id: 1,
     title: "How to Use Body Oils for Maximum Hydration",
-    excerpt: "The secret is in the application - discover the damp-skin method that locks in moisture for 24 hours.",
+    excerpt: "The secret is in the application. Discover the damp skin method that locks in moisture for 24 hours.",
     slug: "body-oils-hydration",
     image: "/products/Rose water 250ml.jpeg"
   },
   {
     id: 2,
     title: "The Perfect Routine for Sunscreen Cream",
-    excerpt: "Lightweight. Non-greasy. Skin-safe defense. Learn how to layer our mineral-based SPF for daily protection.",
+    excerpt: "Lightweight. Non greasy. Safe defense for your skin. Learn how to layer our mineral based SPF for daily protection.",
     slug: "sunscreen-routine",
     image: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/WhatsAppImage2025-06-05at5.27.21PM_1.jpg?v=1749195340"
   },
@@ -37,10 +37,10 @@ export default function HowToPage() {
       
       {/* EDITORIAL HEADER */}
       <header className="guide-header-creative">
-        <p className="guide-kicker">Rituals & Routines</p>
-        <h1 className="guide-title">How-To Guides</h1>
+        <p className="guide-kicker">Daily Routines</p>
+        <h1 className="guide-title">How To Guides</h1>
         <p className="guide-subtitle">
-          Unlock the full potential of your botanicals with our expert application techniques.
+          Unlock the full potential of your natural products with our expert application techniques.
         </p>
       </header>
 

@@ -62,10 +62,10 @@ export default function Home() {
         </div>
         
         <div className="hero-content">
-          <p className="hero-subtitle">Pure • Plant-Based • Handcrafted</p>
+          <p className="hero-subtitle">Pure • Plant Based • Handcrafted</p>
           <h1 className="hero-title">Nature's Touch for Sensitive Skin</h1>
           <Link href="/how-to-use" className="hero-button">
-            HOW-TO GUIDES
+            HOW TO GUIDES
           </Link>
         </div>
       </section>
@@ -107,7 +107,7 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="loading-state">Loading botanicals...</div>
+          <div className="loading-state">Loading our collection...</div>
         ) : (
           <div className="product-grid">
             {filteredProducts.slice(0, 8).map((product) => (
@@ -130,11 +130,12 @@ export default function Home() {
         )}
       </section>
 
-      {/* 4. HOW-TO GUIDES */}
+      {/* 4. HOW TO GUIDES */}
       <section id="how-to-guides" className="how-to-section">
+        
         <div className="how-to-divider">
           <div className="divider-line"></div>
-          <h4 className="divider-text">How-To Guide</h4>
+          <h4 className="divider-text">How To Guide</h4>
           <div className="divider-line"></div>
         </div>
 
@@ -146,17 +147,17 @@ export default function Home() {
             <p className="how-to-subtitle">Body Oils Guide • 5 min read</p>
             <h2 className="how-to-title">How to Use Body Oils for Maximum Hydration</h2>
             <p className="how-to-body">
-              The secret is in the application - discover the damp-skin method that locks in moisture for 24 hours and leaves skin visibly luminous.
+              The secret is in the application. Discover the damp skin method that locks in moisture for 24 hours and leaves skin visibly bright.
             </p>
             <div className="how-to-features">
               <p className="how-to-features-title">Featured in this guide</p>
               <div className="how-to-tags">
-                <span className="tag">Anti-acne Oil</span>
+                <span className="tag">Anti acne Oil</span>
                 <span className="tag">Rosehip Oil</span>
               </div>
             </div>
             <Link href="/how-to-use/body-oils-hydration" className="view-all-link">
-              Read Full Guide →
+              Read Full Guide
             </Link>
           </div>
         </div>
@@ -241,16 +242,22 @@ export default function Home() {
           color: #000000;
         }
 
-        /* Trust Badges */
+        /* Trust Badges - Wrapped for mobile */
         .trust-badges {
           width: 100%;
           max-width: 80rem;
           margin: 0 auto;
           padding: 3rem 2rem;
           display: flex;
+          flex-wrap: wrap;
           justify-content: center;
-          gap: 4rem;
+          gap: 2rem;
           border-bottom: 1px solid #2A2A2A;
+        }
+        @media (min-width: 768px) {
+          .trust-badges {
+            gap: 4rem;
+          }
         }
         .badge-item {
           display: flex;
@@ -302,11 +309,22 @@ export default function Home() {
           color: #ffffff;
           border-color: #6b7280;
         }
+        
+        /* Section Header - Stacked on mobile */
         .section-header {
           display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1rem;
           margin-bottom: 2rem;
+        }
+        @media (min-width: 768px) {
+          .section-header {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 0;
+          }
         }
         .section-subtitle {
           font-size: 0.625rem;
@@ -320,17 +338,19 @@ export default function Home() {
           font-size: 1.875rem;
           font-weight: 700;
         }
+        
+        /* Fixed View All Link */
         .view-all-link {
           font-size: 0.875rem;
-          border-bottom: 1px solid #ffffff;
-          padding-bottom: 0.25rem;
           color: #ffffff;
-          text-decoration: none;
-          transition: color 0.2s ease, border-color 0.2s ease;
+          text-decoration: underline;
+          text-decoration-thickness: 1px;
+          text-underline-offset: 6px;
+          transition: color 0.2s ease, text-decoration-color 0.2s ease;
         }
         .view-all-link:hover {
           color: #d1d5db;
-          border-color: #d1d5db;
+          text-decoration-color: #d1d5db;
         }
 
         /* Product Grid */
@@ -383,13 +403,12 @@ export default function Home() {
           font-size: 0.875rem;
         }
 
-        /* How-To Section */
+        /* How To Section */
         .how-to-section {
           width: 100%;
           max-width: 80rem;
           margin: 0 auto;
           padding: 5rem 2rem;
-          border-top: 1px solid #2A2A2A;
         }
         .how-to-divider {
           display: flex;

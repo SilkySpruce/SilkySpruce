@@ -146,7 +146,7 @@ export default function AccountPage() {
     }
   };
 
-useEffect(() => {
+  useEffect(() => {
     setIsMounted(true);
     
     const fetchAndSetUserData = async (sessionUser: any) => {
@@ -260,7 +260,7 @@ useEffect(() => {
         <div className="auth-card">
           <h1 className="auth-title">My Account</h1>
           <p className="auth-subtitle">
-            {authMode === 'login' ? 'Sign in to access your rituals.' : 'Create an account to join the community.'}
+            {authMode === 'login' ? 'Sign in to manage your account and orders.' : 'Create an account to join the community.'}
           </p>
 
           <form className="auth-form" onSubmit={handleAuthSubmit}>
@@ -306,7 +306,7 @@ useEffect(() => {
               />
             </div>
 
-            {/* REMEMBER ME & FORGOT PASSWORD ROW */}
+            {/* REMEMBER ME AND FORGOT PASSWORD ROW */}
             {authMode === 'login' && (
               <div className="auth-helpers">
                 <label className="remember-me">
@@ -323,7 +323,7 @@ useEffect(() => {
 
           <div className="auth-toggle">
             {authMode === 'login' ? (
-              <p>Don't have an account? <button onClick={() => { setAuthMode('signup'); setAuthError(''); setAuthMessage(''); }}>Sign up</button></p>
+              <p>Do not have an account? <button onClick={() => { setAuthMode('signup'); setAuthError(''); setAuthMessage(''); }}>Sign up</button></p>
             ) : (
               <p>Already have an account? <button onClick={() => { setAuthMode('login'); setAuthError(''); setAuthMessage(''); }}>Sign in</button></p>
             )}
@@ -449,7 +449,7 @@ useEffect(() => {
                     </div>
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Apartment / Suite (Optional)</label>
+                        <label>Apartment or Suite (Optional)</label>
                         <input 
                           type="text" 
                           value={newAddress.apartment}
@@ -486,7 +486,7 @@ useEffect(() => {
               ) : (
                 <div className="address-list">
                   {addresses.length === 0 ? (
-                    <p className="empty-state-text">You haven't saved any addresses yet.</p>
+                    <p className="empty-state-text">You have not saved any addresses yet.</p>
                   ) : (
                     addresses.map(address => (
                       <div key={address.id} className="address-card">
@@ -540,7 +540,7 @@ useEffect(() => {
               
               {orders.length === 0 ? (
                 <div className="empty-state-wrapper">
-                  <p className="empty-state-text">You haven't placed any orders yet.</p>
+                  <p className="empty-state-text">You have not placed any orders yet.</p>
                   <Link href="/shop" className="browse-shop-btn">
                     BROWSE COLLECTION
                   </Link>

@@ -1,52 +1,51 @@
-// src/app/blog/page.tsx
 import Link from 'next/link';
 
 const BLOG_POSTS = [
   {
     id: 1,
     date: "APRIL 17, 2026",
-    title: "The Power of the Rose: Why Our Anti-Aging Glow Oil is a Fan Favorite",
-    excerpt: "There’s a reason the Silky Spruce Anti-Aging glow oil has become the most-loved product in the Silky Spruce collection. It isn't just about hydration; it’s about the legendary benefits of the Rose essential oil.",
+    title: "The Power of the Rose: Why Our Anti Aging Glow Oil is a Fan Favorite",
+    excerpt: "The Silky Spruce Anti Aging glow oil is the most popular product in our collection for a good reason. It offers more than just hydration. It brings the well known benefits of Rose essential oil to your daily routine.",
     slug: "the-power-of-the-rose",
     image: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/AntiAgingGlowOil1.jpg?v=1746893646"
   },
   {
     id: 2,
     date: "APRIL 10, 2026",
-    title: "Best Body Butter for Eczema in Kenya (What Actually Works)",
-    excerpt: "If you’ve ever dealt with eczema, then you already know… it’s not just “dry skin.” It’s the itching. The flare-ups that come out of nowhere. The frustration of trying product after product and still not getting relief.",
+    title: "Best Body Butter for Eczema in Kenya",
+    excerpt: "If you have ever experienced eczema, you know it is more than just dry skin. It involves severe itching and sudden flare ups. It is frustrating to try many products without finding relief.",
     slug: "best-body-butter-eczema-kenya",
     image: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/WhippedButterVanilla.jpg?v=1746896431"
   },
   {
     id: 3,
     date: "NOVEMBER 22, 2025",
-    title: "Silky Spruce Bebe Balm: The Natural Solution for Dry, Sensitive Skin",
-    excerpt: "Dry skin can be uncomfortable — especially when it shows up on babies, people with sensitive skin conditions, or anyone living in harsh weather. At Silky Spruce, we believe in healing skin with love and nature.",
+    title: "Silky Spruce Bebe Balm: The Natural Solution for Dry and Sensitive Skin",
+    excerpt: "Dry skin causes discomfort, especially for babies, people with sensitive skin, or anyone living in harsh weather conditions. At Silky Spruce, we believe in healing the skin naturally.",
     slug: "bebe-balm-natural-solution",
     image: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/BebeBalm.jpg?v=1747777466"
   },
   {
     id: 4,
     date: "OCTOBER 28, 2025",
-    title: "Hair Grows Naturally — No Oil Can Grow Your Hair",
-    excerpt: "Let’s be honest, no oil can create hair growth out of nothing. Hair grows naturally, from within. It’s a process fueled by healthy scalp circulation, nutrition, and consistent care — not quick fixes or miracle claims.",
+    title: "Hair Grows Naturally: No Oil Can Grow Your Hair",
+    excerpt: "We must be honest. No oil can create hair growth out of nothing. Hair grows naturally from within. It is a process driven by healthy scalp circulation, proper nutrition, and consistent care.",
     slug: "hair-grows-naturally",
     image: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/HairGrowthStimulator.jpg?v=1746892625"
   },
   {
     id: 5,
     date: "MAY 20, 2025",
-    title: "How to Treat Dry Skin Naturally: Top Plant-Based Remedies",
-    excerpt: "Dry skin doesn’t ask for much. It just wants to be heard. When it tightens, flakes, itches—that’s not a flaw. It’s a signal. A quiet way of saying, “Something’s missing.”",
+    title: "How to Treat Dry Skin Naturally: Top Plant Based Remedies",
+    excerpt: "Dry skin does not ask for much. It simply wants attention. When it tightens, flakes, or itches, that is not a flaw. It is a signal. It is a quiet way of saying that something is missing.",
     slug: "treat-dry-skin-naturally",
     image: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/CoconutButterLotion.jpg?v=1747662755"
   },
   {
     id: 6,
     date: "MAY 20, 2025",
-    title: "Why Your Skin Loves Shea Butter (And How to Use It Daily)",
-    excerpt: "Some ingredients come and go. Shea butter stays. It’s not a trend. It’s a staple used for generations to soften skin, soothe irritation, and lock in moisture without the fuss.",
+    title: "Why Your Skin Loves Shea Butter",
+    excerpt: "Some skincare ingredients come and go, but Shea butter remains a permanent fixture. It is not a passing trend. People have used it for generations to soften skin, soothe irritation, and lock in moisture without any complications.",
     slug: "why-skin-loves-shea-butter",
     image: "https://cdn.shopify.com/s/files/1/0680/5579/3708/files/NiloticSheaButter.jpg?v=1747764559"
   }
@@ -56,16 +55,14 @@ export default function BlogPage() {
   return (
     <div className="blog-container">
       
-      {/* REDESIGNED EDITORIAL HEADER */}
       <header className="blog-header-creative">
         <p className="blog-kicker">The Silky Spruce Journal</p>
         <h1 className="blog-title">Nature's Finest</h1>
         <p className="blog-subtitle">
-          Insights, rituals, and plant-based remedies for your everyday glow.
+          Insights, rituals, and plant based remedies for your everyday glow.
         </p>
       </header>
 
-      {/* BLOG GRID */}
       <div className="blog-grid">
         {BLOG_POSTS.map((post) => (
           <article key={post.id} className="blog-card">
@@ -102,7 +99,6 @@ export default function BlogPage() {
           flex-direction: column;
         }
 
-        /* Redesigned Header */
         .blog-header-creative {
           text-align: center;
           margin-bottom: 5rem;
@@ -144,7 +140,6 @@ export default function BlogPage() {
           }
         }
 
-        /* Grid Setup */
         .blog-grid {
           display: grid;
           grid-template-columns: 1fr;
@@ -161,7 +156,6 @@ export default function BlogPage() {
           }
         }
 
-        /* Card Styling */
         .blog-card {
           border: 1px solid #2A2A2A;
           display: flex;

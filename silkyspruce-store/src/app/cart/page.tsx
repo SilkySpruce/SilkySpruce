@@ -68,7 +68,7 @@ export default function CartPage() {
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = subtotal > 10000 ? 0 : 500;
   
-  // Calculate max points they can use (can't exceed subtotal)
+  // Calculate max points they can use (cannot exceed subtotal)
   const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
   const pointsApplied = usePoints ? maxPoints : 0;
   
@@ -121,7 +121,7 @@ export default function CartPage() {
       }))
     };
     
-    alert("Payment successful! Saving your order...");
+    alert("Payment successful. Saving your order.");
     const result = await processCheckout(checkoutPayload);
 
     if (result.success) {
@@ -147,7 +147,7 @@ export default function CartPage() {
   const handleSandboxCheckout = async () => {
     if (!validateCheckout()) return;
 
-    const isSuccess = window.confirm("SANDBOX MODE: Click 'OK' to simulate a SUCCESSFUL payment.");
+    const isSuccess = window.confirm("SANDBOX MODE: Click OK to simulate a successful payment.");
     if (isSuccess) {
       const finalAddress = getFinalAddress();
 
@@ -188,13 +188,13 @@ export default function CartPage() {
     }
   };
 
-  if (!isMounted) return <div className="loading-state">Loading ritual...</div>;
+  if (!isMounted) return <div className="loading-state">Loading your cart...</div>;
 
   if (items.length === 0) {
     return (
       <div className="empty-cart-container">
-        <h2>Your ritual is empty.</h2>
-        <p>Discover our plant-based collection to start building your routine.</p>
+        <h2>Your cart is empty.</h2>
+        <p>Explore our plant based collection to start building your routine.</p>
         <Link href="/shop" className="continue-shopping-btn">Explore the Collection</Link>
         <CartStyles />
       </div>
@@ -268,8 +268,8 @@ export default function CartPage() {
             <h3><ShieldCheck size={18} className="shield-icon" /> Secure Checkout</h3>
             <p>We accept local and international payment methods.</p>
             <div className="payment-methods">
-              <div className="payment-badge"><Smartphone size={24} /><span>M-Pesa / Airtel</span></div>
-              <div className="payment-badge"><CreditCard size={24} /><span>Visa / Mastercard</span></div>
+              <div className="payment-badge"><Smartphone size={24} /><span>M Pesa or Airtel</span></div>
+              <div className="payment-badge"><CreditCard size={24} /><span>Visa or Mastercard</span></div>
             </div>
           </div>
         </div>
@@ -297,7 +297,7 @@ export default function CartPage() {
                   <Gift size={16} /> Use Points ({user.loyaltyPoints})
                 </label>
                 {usePoints && (
-                  <span style={{ color: '#788E7D', fontWeight: 600 }}>- KSh {pointsApplied}</span>
+                  <span style={{ color: '#788E7D', fontWeight: 600 }}>Subtract KSh {pointsApplied}</span>
                 )}
               </div>
             )}
@@ -357,7 +357,7 @@ export default function CartPage() {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          <label style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase' }}>City / Region</label>
+                          <label style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase' }}>City or Region</label>
                           <select 
                             value={shippingDetails.city}
                             onChange={(e) => setShippingDetails({...shippingDetails, city: e.target.value})}
@@ -384,7 +384,7 @@ export default function CartPage() {
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase' }}>Apt, Suite (Optional)</label>
+                        <label style={{ fontSize: '0.75rem', color: '#9ca3af', textTransform: 'uppercase' }}>Apartment or Suite (Optional)</label>
                         <input 
                           type="text" value={shippingDetails.apartment}
                           onChange={(e) => setShippingDetails({...shippingDetails, apartment: e.target.value})}

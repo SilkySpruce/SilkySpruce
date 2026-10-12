@@ -1,10 +1,10 @@
-// src/app/shop/[slug]/ProductClient.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function ProductClient({ slug }: { slug: string }) {
   const [product, setProduct] = useState<any>(null);
@@ -12,7 +12,7 @@ export default function ProductClient({ slug }: { slug: string }) {
   const [selectedVariation, setSelectedVariation] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [isExpanded, setIsExpanded] = useState(false); // <-- Added state for Read More
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const addItem = useCartStore((state) => state.addItem);
 
@@ -94,10 +94,11 @@ export default function ProductClient({ slug }: { slug: string }) {
         <div className="w-full md:w-1/2">
           <div className="aspect-square relative overflow-hidden bg-[#1A1A1A]">
             {product.featured_image ? (
-              <img 
+              <Image 
                 src={product.featured_image} 
                 alt={product.name}
-                className="object-cover w-full h-full"
+                fill
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-600">
@@ -124,16 +125,15 @@ export default function ProductClient({ slug }: { slug: string }) {
                 {!isExpanded ? (
                   <p>
                     {shortDesc}
-                    {hasLongDesc && "..."}
+                    {hasLongDesc && shortDesc !== longDesc && "..."}
                   </p>
                 ) : (
                   <div className="flex flex-col gap-4">
-                    <p>{shortDesc}</p>
                     <p>{longDesc}</p>
                   </div>
                 )}
 
-                {hasLongDesc && (
+                {hasLongDesc && shortDesc !== longDesc && (
                   <button 
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="text-white text-sm font-semibold underline mt-3 block hover:text-[#788E7D] transition"
