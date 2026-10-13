@@ -35,16 +35,13 @@ export default function ShopPage() {
   }, []);
 
   const filteredProducts = products.filter(p => {
-    if (activeFilter === "All") return true;
-    if (activeFilter === "Body Oils") return p.name.includes("Oil") && !p.name.includes("Hair") && !p.name.includes("Massage") && !p.name.includes("Essential");
-    if (activeFilter === "Hair Oils") return p.name.includes("Hair") || p.name.includes("Growth");
-    if (activeFilter === "Massage Oils") return p.name.includes("Massage");
-    if (activeFilter === "Lotions") return p.name.includes("Lotion");
-    if (activeFilter === "Soaps") return p.name.includes("Soap");
-    if (activeFilter === "Body Butters") return p.name.includes("Butter");
-    if (activeFilter === "Essential Oils") return p.name.includes("Essential Oil");
-    if (activeFilter === "Lip Care") return p.name.includes("Lip");
-    return true;
+    if (activeFilter === "All" || activeFilter === "All Products") return true;
+    
+    if (p.category) {
+      return p.category.includes(activeFilter);
+    }
+    
+    return false;
   });
 
   return (

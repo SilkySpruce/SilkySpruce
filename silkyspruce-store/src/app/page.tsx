@@ -14,7 +14,17 @@ interface Product {
   product_variants: { price: number; size: string }[];
 }
 
-const CATEGORIES = ["All Products", "Body Oils", "Hair Oils", "Massage Oils", "Lotions", "Soaps", "Body Butters"];
+const CATEGORIES = [
+  "All Products", 
+  "Body Oils", 
+  "Hair Oils", 
+  "Massage Oils", 
+  "Lotions", 
+  "Soaps", 
+  "Body Butters", 
+  "Essential Oils", 
+  "Lip Care"
+];
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -34,15 +44,13 @@ export default function Home() {
     loadProducts();
   }, []);
 
+  // Dynamic filtering using the exact database categories
   const filteredProducts = products.filter(p => {
-    if (activeFilter === "All Products") return true;
-    if (activeFilter === "Body Oils") return p.name.includes("Oil") && !p.name.includes("Hair") && !p.name.includes("Massage");
-    if (activeFilter === "Hair Oils") return p.name.includes("Hair") || p.name.includes("Growth");
-    if (activeFilter === "Massage Oils") return p.name.includes("Massage");
-    if (activeFilter === "Lotions") return p.name.includes("Lotion");
-    if (activeFilter === "Soaps") return p.name.includes("Soap");
-    if (activeFilter === "Body Butters") return p.name.includes("Butter");
-    return true;
+    if (activeFilter === "All Products" || activeFilter === "All") return true;
+    if (p.category) {
+      return p.category.includes(activeFilter);
+    }
+    return false;
   });
 
   return (
@@ -84,6 +92,8 @@ export default function Home() {
 
       {/* 3. PRODUCT GRID & FILTERS */}
       <section className="product-section">
+        
+        {/* Horizontally scrollable filter row for mobile */}
         <div className="filter-container">
           {CATEGORIES.map((category) => (
             <button
@@ -123,7 +133,11 @@ export default function Home() {
                   )}
                 </div>
                 <h3 className="product-name">{product.name}</h3>
-                <p className="product-price">KSh {product.product_variants[0]?.price}</p>
+                <p className="product-price">
+                  {product.product_variants && product.product_variants[0] 
+                    ? `KSh ${product.product_variants[0].price}` 
+                    : 'View Product'}
+                </p>
               </Link>
             ))}
           </div>
@@ -219,7 +233,7 @@ export default function Home() {
           font-weight: 600;
         }
         .hero-title {
-          font-size: 3rem;
+          font-size: 2.5rem;
           font-weight: 700;
           margin-bottom: 2.5rem;
           max-width: 56rem;
@@ -242,16 +256,16 @@ export default function Home() {
           color: #000000;
         }
 
-        /* Trust Badges - Wrapped for mobile */
+        /* Trust Badges */
         .trust-badges {
           width: 100%;
           max-width: 80rem;
           margin: 0 auto;
-          padding: 3rem 2rem;
+          padding: 3rem 1.5rem;
           display: flex;
           flex-wrap: wrap;
           justify-content: center;
-          gap: 2rem;
+          gap: 1.5rem;
           border-bottom: 1px solid #2A2A2A;
         }
         @media (min-width: 768px) {
@@ -278,24 +292,37 @@ export default function Home() {
           width: 100%;
           max-width: 80rem;
           margin: 0 auto;
-          padding: 5rem 2rem;
+          padding: 4rem 1.5rem;
         }
+        
+        /* Mobile-friendly Horizontal Filter Scroll */
         .filter-container {
           display: flex;
-          flex-wrap: wrap;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 4rem;
+          gap: 0.75rem;
+          margin-bottom: 3rem;
           border-bottom: 1px solid #2A2A2A;
-          padding-bottom: 2rem;
+          padding-bottom: 1.5rem;
+          
+          /* Enables sleek horizontal scrolling */
+          overflow-x: auto;
+          flex-wrap: nowrap;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none; /* Hides scrollbar in Firefox */
         }
+        .filter-container::-webkit-scrollbar {
+          display: none; /* Hides scrollbar in Chrome/Safari */
+        }
+        
         .filter-button {
+          flex-shrink: 0; /* Prevents buttons from squishing */
           padding: 0.5rem 1.25rem;
           border: 1px solid #2A2A2A;
           font-size: 0.875rem;
           transition: all 0.2s ease;
           cursor: pointer;
           background-color: transparent;
+          touch-action: manipulation; /* Prevents double-tap zooming on iOS */
         }
         .filter-active {
           border-color: #788E7D;
@@ -310,7 +337,7 @@ export default function Home() {
           border-color: #6b7280;
         }
         
-        /* Section Header - Stacked on mobile */
+        /* Section Header */
         .section-header {
           display: flex;
           flex-direction: column;
@@ -339,7 +366,6 @@ export default function Home() {
           font-weight: 700;
         }
         
-        /* Fixed View All Link */
         .view-all-link {
           font-size: 0.875rem;
           color: #ffffff;
@@ -353,7 +379,7 @@ export default function Home() {
           text-decoration-color: #d1d5db;
         }
 
-        /* Product Grid */
+        /* Responsive Product Grid */
         .loading-state {
           height: 16rem;
           display: flex;
@@ -363,8 +389,9 @@ export default function Home() {
         }
         .product-grid {
           display: grid;
-          grid-template-columns: 1fr;
-          gap: 2rem;
+          /* 1 column on mobile */
+          grid-template-columns: 1fr; 
+          gap: 2.5rem;
         }
         .product-card {
           cursor: pointer;
@@ -395,9 +422,6 @@ export default function Home() {
           text-overflow: ellipsis;
           white-space: nowrap;
         }
-        .product-card:hover .product-name {
-          color: #788E7D;
-        }
         .product-price {
           color: #9ca3af;
           font-size: 0.875rem;
@@ -408,13 +432,13 @@ export default function Home() {
           width: 100%;
           max-width: 80rem;
           margin: 0 auto;
-          padding: 5rem 2rem;
+          padding: 4rem 1.5rem;
         }
         .how-to-divider {
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 4rem;
+          margin-bottom: 3rem;
         }
         .divider-line {
           height: 1px;
@@ -428,11 +452,12 @@ export default function Home() {
           color: #9ca3af;
           margin: 0 1.5rem;
           font-weight: 600;
+          white-space: nowrap;
         }
         .how-to-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 4rem;
+          gap: 3rem;
           align-items: center;
         }
         .how-to-image-wrapper {
@@ -451,16 +476,16 @@ export default function Home() {
           text-transform: uppercase;
         }
         .how-to-title {
-          font-size: 2.25rem;
+          font-size: 2rem;
           font-weight: 700;
           margin-bottom: 1.5rem;
           line-height: 1.2;
         }
         .how-to-body {
           color: #d1d5db;
-          margin-bottom: 2.5rem;
+          margin-bottom: 2rem;
           line-height: 1.625;
-          font-size: 1.125rem;
+          font-size: 1rem;
         }
         .how-to-features {
           margin-bottom: 2.5rem;
@@ -476,20 +501,26 @@ export default function Home() {
         .how-to-tags {
           display: flex;
           gap: 1rem;
+          flex-wrap: wrap;
         }
         .tag {
           border: 1px solid #2A2A2A;
           padding: 0.5rem 1rem;
-          font-size: 0.875rem;
+          font-size: 0.75rem;
           color: #d1d5db;
         }
 
-        /* Responsive Breakpoints */
+        /* Tablet & Desktop Adjustments */
         @media (min-width: 768px) {
           .hero-title { font-size: 4.5rem; }
-          .product-grid { grid-template-columns: repeat(2, 1fr); }
+          .product-grid { 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 2rem;
+          }
           .how-to-grid { grid-template-columns: 1fr 1fr; }
           .how-to-image-wrapper { aspect-ratio: 4 / 3; }
+          .how-to-title { font-size: 2.25rem; }
+          .how-to-body { font-size: 1.125rem; }
         }
         @media (min-width: 1024px) {
           .product-grid { grid-template-columns: repeat(4, 1fr); }
