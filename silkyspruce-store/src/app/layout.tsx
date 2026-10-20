@@ -9,13 +9,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: {
     template: '%s | Silky Spruce',
-    default: 'Silky Spruce | Handcrafted Botanical Skincare'
+    default: 'Silky Spruce | Handcrafted Plant Based Skincare'
   },
-  description: 'Natural, handcrafted botanical skincare, soaps, and wellness rituals made in Kenya.',
+  description: 'Natural, handcrafted plant based skincare, soaps, and wellness rituals made in Kenya.',
   metadataBase: new URL('https://silkyspruce.co.ke'), // Replace with your actual domain when you buy it
   openGraph: {
-    title: 'Silky Spruce | Handcrafted Botanical Skincare',
-    description: 'Natural, handcrafted botanical skincare, soaps, and wellness rituals made in Kenya.',
+    title: 'Silky Spruce | Handcrafted Plant Based Skincare',
+    description: 'Natural, handcrafted plant based skincare, soaps, and wellness rituals made in Kenya.',
     url: 'https://silkyspruce.co.ke',
     siteName: 'Silky Spruce',
     images: [
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
         url: '/products/Silky Spruce Logo.png',
         width: 1200,
         height: 630,
-        alt: 'Silky Spruce Botanical Skincare',
+        alt: 'Silky Spruce Plant Based Skincare',
       },
     ],
     locale: 'en_KE',
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Silky Spruce | Handcrafted Botanical Skincare',
-    description: 'Natural, handcrafted botanical skincare, soaps, and wellness rituals.',
+    title: 'Silky Spruce | Handcrafted Plant Based Skincare',
+    description: 'Natural, handcrafted plant based skincare, soaps, and wellness rituals.',
   },
 };
 

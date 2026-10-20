@@ -131,6 +131,11 @@ export default function Home() {
                       className="product-image-card"
                     />
                   )}
+
+                  {/* Hover Overlay */}
+                  <div className="product-hover-overlay">
+                    <span className="view-options-btn">View Options</span>
+                  </div>
                 </div>
                 <h3 className="product-name">{product.name}</h3>
                 <p className="product-price">
@@ -508,6 +513,36 @@ export default function Home() {
           padding: 0.5rem 1rem;
           font-size: 0.75rem;
           color: #d1d5db;
+        }
+
+        /* Hover Add To Cart / View Options */
+        .product-hover-overlay {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          padding: 1rem;
+          background: linear-gradient(to top, rgba(17,17,17,0.9), transparent);
+          transform: translateY(100%);
+          transition: transform 0.3s ease;
+          display: flex;
+          justify-content: center;
+        }
+        .product-card:hover .product-hover-overlay {
+          transform: translateY(0);
+        }
+        .view-options-btn {
+          background-color: #ffffff;
+          color: #000000;
+          padding: 0.75rem 1.5rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+          width: 100%;
+          text-align: center;
+          transition: background-color 0.2s ease;
+        }
+        .view-options-btn:hover {
+          background-color: #e5e7eb;
         }
 
         /* Tablet & Desktop Adjustments */

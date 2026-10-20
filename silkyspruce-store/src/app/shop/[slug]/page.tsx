@@ -26,7 +26,7 @@ export async function generateMetadata(
   const previousImages = (await parent).openGraph?.images || [];
   
   // Use short_description for the SEO preview, fallback to long_description
-  const baseDescription = product.short_description || product.long_description || 'Discover our botanical skincare collection.';
+  const baseDescription = product.short_description || product.long_description || 'Discover our plant based skincare collection.';
   const cleanDescription = baseDescription.replace(/<[^>]*>?/gm, '').substring(0, 160) + '...';
 
   return {

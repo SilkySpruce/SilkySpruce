@@ -1,8 +1,8 @@
-// src/app/actions/processCheckout.ts
 "use server";
 
 import { createClient } from '@supabase/supabase-js';
 import { sendOrderEmails } from './sendOrderEmail';
+import { calculateShippingFee } from '@/utils/shipping';
 
 // 1. Create a secure Admin Client that bypasses RLS for backend operations
 const supabaseAdmin = createClient(
@@ -19,6 +19,9 @@ interface CheckoutPayload {
     email: string;
     phone: string;
     address: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    city?: string;
   };
   items: Array<{
     id: string;
@@ -34,22 +37,45 @@ export async function processCheckout(payload: CheckoutPayload) {
     let finalAddress = payload.customer.address;
 
     // -----------------------------------------------------------------
-    // 0. FETCH USER ADDRESS FROM DB (IF LOGGED IN)
+    // 0. SAVE/FETCH USER ADDRESS
     // -----------------------------------------------------------------
     if (payload.userId) {
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('address')
-        .eq('id', payload.userId)
-        .single();
-        
-      if (profile?.address) {
-        finalAddress = profile.address;
+      // If new coordinates were passed, save them to the address book
+      if (payload.customer.latitude && payload.customer.longitude) {
+        // Clear old defaults first
+        await supabaseAdmin
+          .from('user_addresses')
+          .update({ is_default: false })
+          .eq('user_id', payload.userId);
+
+        await supabaseAdmin
+          .from('user_addresses')
+          .insert([{
+            user_id: payload.userId,
+            recipient_name: `${payload.customer.firstName} ${payload.customer.lastName}`,
+            phone: payload.customer.phone,
+            street_address: payload.customer.address,
+            city: payload.customer.city || "Unknown",
+            latitude: payload.customer.latitude,
+            longitude: payload.customer.longitude,
+            is_default: true
+          }]);
+      } else {
+        // Fetch existing default address
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('address')
+          .eq('id', payload.userId)
+          .single();
+          
+        if (profile?.address) {
+          finalAddress = profile.address;
+        }
       }
     }
 
     // -----------------------------------------------------------------
-    // 1. INVENTORY VERIFICATION (Targeting product_variants)
+    // 1. INVENTORY VERIFICATION
     // -----------------------------------------------------------------
     const variantIds = payload.items.map(item => item.id);
     
@@ -78,10 +104,17 @@ export async function processCheckout(payload: CheckoutPayload) {
     }
 
     // -----------------------------------------------------------------
-    // 2. CALCULATE TOTALS & CREATE ORDER
+    // 2. SECURE BACKEND PRICING CALCULATION
     // -----------------------------------------------------------------
     const subtotal = payload.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingFee = subtotal > 10000 ? 0 : 500;
+    
+    // The backend dynamically calculates the fee based on the exact coordinates passed.
+    // If coordinates are missing, it safely falls back to the default 300 configured in the utility.
+    const shippingFee = calculateShippingFee(
+      payload.customer.latitude || 0,
+      payload.customer.longitude || 0
+    );
+    
     const totalAmount = subtotal - payload.pointsUsed + shippingFee;
     
     const pointsEarned = Math.floor(totalAmount / 100);
@@ -126,7 +159,6 @@ export async function processCheckout(payload: CheckoutPayload) {
     for (const item of payload.items) {
       const dbVariant = stockData.find(v => v.id === item.id);
       if (dbVariant) {
-        // Direct update to product_variants stock
         await supabaseAdmin
           .from('product_variants')
           .update({ stock_quantity: dbVariant.stock_quantity - item.quantity })
@@ -143,7 +175,7 @@ export async function processCheckout(payload: CheckoutPayload) {
         .select('loyalty_points')
         .eq('id', payload.userId)
         .maybeSingle();
-      
+        
       const currentPoints = profile?.loyalty_points || 0;
       const newBalance = currentPoints - payload.pointsUsed + pointsEarned;
 
