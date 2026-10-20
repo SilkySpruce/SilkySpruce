@@ -20,10 +20,9 @@ interface Address {
 export default function AccountPage() {
   const { user, isAuthenticated, loginUser, logoutUser } = useUserStore();
   const { clearCart } = useCartStore();
-  
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [activeTab, setActiveTab] = useState('profile');
-  
+
   // Auth Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +39,7 @@ export default function AccountPage() {
   // Address Book State
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
-  
+
   // New Address Form State
   const [newAddress, setNewAddress] = useState({
     recipientName: '',
@@ -50,6 +49,19 @@ export default function AccountPage() {
     city: '',
     isDefault: false
   });
+
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/account`,
+      },
+    });
+    
+    if (error) {
+      setAuthError(error.message);
+    }
+  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +162,6 @@ export default function AccountPage() {
     setIsMounted(true);
     
     const fetchAndSetUserData = async (sessionUser: any) => {
-      // Grab their real point balance from the new profiles table
       const { data: profile } = await supabase
         .from('profiles')
         .select('loyalty_points')
@@ -166,6 +177,7 @@ export default function AccountPage() {
         phone: sessionUser.user_metadata?.phone || '',
       });
       setPhone(sessionUser.user_metadata?.phone || '');
+
       loadAddresses(sessionUser.id);
       loadOrders(sessionUser.id);
     };
@@ -200,7 +212,6 @@ export default function AccountPage() {
     e.preventDefault();
     if (!user) return;
 
-    // If setting as default, remove default status from all other addresses first
     if (newAddress.isDefault) {
       await supabase
         .from('user_addresses')
@@ -238,10 +249,7 @@ export default function AccountPage() {
   const handleSetDefault = async (id: string) => {
     if (!user) return;
     
-    // First, set all user addresses to false
     await supabase.from('user_addresses').update({ is_default: false }).eq('user_id', user.id);
-    
-    // Then, set the selected one to true
     const { error } = await supabase.from('user_addresses').update({ is_default: true }).eq('id', id);
     
     if (!error) {
@@ -263,9 +271,25 @@ export default function AccountPage() {
             {authMode === 'login' ? 'Sign in to manage your account and orders.' : 'Create an account to join the community.'}
           </p>
 
+          <button type="button" className="google-btn" onClick={handleGoogleLogin}>
+            <svg className="google-icon" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          <div className="auth-divider">
+            <div className="divider-line"></div>
+            <span>OR</span>
+            <div className="divider-line"></div>
+          </div>
+
           <form className="auth-form" onSubmit={handleAuthSubmit}>
-            {authError && <div className="text-red-500 text-sm mb-2 font-semibold">{authError}</div>}
-            {authMessage && <div className="text-[#788E7D] text-sm mb-2 font-semibold">{authMessage}</div>}
+            {authError && <div className="error-text">{authError}</div>}
+            {authMessage && <div className="success-text">{authMessage}</div>}
             
             {authMode === 'signup' && (
               <div className="form-group">
@@ -298,7 +322,7 @@ export default function AccountPage() {
               <input 
                 type="password" 
                 required 
-                placeholder="••••••••" 
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 minLength={6}
@@ -306,7 +330,6 @@ export default function AccountPage() {
               />
             </div>
 
-            {/* REMEMBER ME AND FORGOT PASSWORD ROW */}
             {authMode === 'login' && (
               <div className="auth-helpers">
                 <label className="remember-me">
@@ -579,6 +602,7 @@ export default function AccountPage() {
               )}
             </section>
           )}
+
         </main>
       </div>
       <DashboardStyles />
@@ -599,7 +623,6 @@ const AuthStyles = () => (
       justify-content: center;
       padding: 4rem 2rem;
     }
-
     .auth-card {
       width: 100%;
       max-width: 28rem;
@@ -609,7 +632,6 @@ const AuthStyles = () => (
       display: flex;
       flex-direction: column;
     }
-
     .auth-title {
       font-size: 2rem;
       font-weight: 700;
@@ -617,25 +639,61 @@ const AuthStyles = () => (
       text-align: center;
       margin-bottom: 0.5rem;
     }
-
     .auth-subtitle {
       color: #9ca3af;
       text-align: center;
       margin-bottom: 2.5rem;
       font-size: 0.875rem;
     }
-    
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      background-color: #ffffff;
+      color: #000000;
+      border: none;
+      padding: 1rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      width: 100%;
+    }
+    .google-btn:hover {
+      background-color: #f3f4f6;
+    }
+    .google-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .auth-divider span {
+      color: #6b7280;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .divider-line {
+      flex-grow: 1;
+      height: 1px;
+      background-color: #2A2A2A;
+    }
     .auth-form {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
     }
-
     .form-group {
       display: flex;
       flex-direction: column;
     }
-
     .form-group label {
       font-size: 0.625rem;
       letter-spacing: 0.1em;
@@ -644,7 +702,6 @@ const AuthStyles = () => (
       margin-bottom: 0.5rem;
       font-weight: 600;
     }
-
     .form-group input {
       background: transparent;
       border: 1px solid #2A2A2A;
@@ -653,12 +710,22 @@ const AuthStyles = () => (
       transition: border-color 0.2s;
       width: 100%;
     }
-
     .form-group input:focus {
       outline: none;
       border-color: #788E7D;
     }
-    
+    .error-text {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .success-text {
+      color: #788E7D;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
     .submit-btn {
       background: #788E7D;
       color: #ffffff;
@@ -670,23 +737,19 @@ const AuthStyles = () => (
       margin-top: 1rem;
       transition: background 0.2s;
     }
-
     .submit-btn:hover:not(:disabled) {
       background: #687C6D;
     }
-
     .submit-btn:disabled {
       opacity: 0.7;
       cursor: not-allowed;
     }
-    
     .auth-toggle {
       margin-top: 2rem;
       text-align: center;
       font-size: 0.875rem;
       color: #9ca3af;
     }
-
     .auth-toggle button {
       background: none;
       border: none;
@@ -696,6 +759,26 @@ const AuthStyles = () => (
       border-bottom: 1px solid #ffffff;
       margin-left: 0.5rem;
       padding-bottom: 0.1rem;
+    }
+    .auth-helpers {
+      display: block;
+      width: 100%;
+      margin-top: -0.5rem;
+    }
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #9ca3af;
+      font-size: 0.875rem;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
+    .remember-me input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      accent-color: #788E7D;
+      cursor: pointer;
     }
   `}</style>
 );
@@ -709,56 +792,47 @@ const DashboardStyles = () => (
       justify-content: center;
       color: #9ca3af;
     }
-
     .dashboard-container {
       width: 100%;
       max-width: 80rem;
       margin: 0 auto;
       padding: 4rem 2rem 8rem;
     }
-
     .dashboard-header {
       margin-bottom: 4rem;
       border-bottom: 1px solid #2A2A2A;
       padding-bottom: 2rem;
     }
-
     .dashboard-title {
       font-size: 2.5rem;
       font-weight: 700;
       color: #ffffff;
     }
-
     .dashboard-layout {
       display: flex;
       flex-direction: column;
       gap: 4rem;
     }
-
     @media (min-width: 1024px) {
       .dashboard-layout {
         flex-direction: row;
         align-items: flex-start;
       }
     }
-    
     .dashboard-sidebar {
       width: 100%;
     }
-
     @media (min-width: 1024px) {
       .dashboard-sidebar {
         width: 16rem;
         flex-shrink: 0;
       }
     }
-
     .dashboard-nav {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
     }
-
     .nav-item {
       display: flex;
       align-items: center;
@@ -772,58 +846,53 @@ const DashboardStyles = () => (
       transition: all 0.2s;
       text-align: left;
     }
-
     .nav-item:hover {
       color: #ffffff;
     }
-
     .nav-item.active {
       border-color: #2A2A2A;
       color: #ffffff;
       font-weight: 600;
       background: rgba(255, 255, 255, 0.02);
     }
-
     .logout-btn {
       margin-top: 2rem;
       color: #ef4444;
     }
-
     .logout-btn:hover {
       color: #f87171;
     }
-
     .dashboard-main {
       flex-grow: 1;
       width: 100%;
     }
-
     .tab-section {
       animation: fadeIn 0.3s ease;
     }
-
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-
     .tab-header-flex {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 2rem;
     }
-
     .tab-title {
       font-size: 1.5rem;
       font-weight: 600;
       color: #ffffff;
     }
-    
     .mb-0 {
       margin-bottom: 0 !important;
     }
-
     .add-new-btn {
       display: flex;
       align-items: center;
@@ -838,37 +907,31 @@ const DashboardStyles = () => (
       cursor: pointer;
       transition: all 0.2s;
     }
-
     .add-new-btn:hover {
       background: #788E7D;
       color: #ffffff;
     }
-    
     .profile-form {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
       max-width: 40rem;
     }
-
     .form-row {
       display: flex;
       gap: 1.5rem;
       flex-direction: column;
     }
-
     @media (min-width: 768px) {
       .form-row {
         flex-direction: row;
       }
     }
-
     .form-group {
       display: flex;
       flex-direction: column;
       width: 100%;
     }
-
     .form-group label {
       font-size: 0.625rem;
       letter-spacing: 0.1em;
@@ -877,7 +940,6 @@ const DashboardStyles = () => (
       margin-bottom: 0.5rem;
       font-weight: 600;
     }
-
     .form-group input {
       background: transparent;
       border: 1px solid #2A2A2A;
@@ -886,45 +948,38 @@ const DashboardStyles = () => (
       transition: border-color 0.2s;
       width: 100%;
     }
-
     .form-group input:focus {
       outline: none;
       border-color: #788E7D;
     }
-
     .disabled-input {
       opacity: 0.5;
       cursor: not-allowed;
       background: rgba(255,255,255,0.02) !important;
     }
-
     .checkbox-group {
       display: flex;
       align-items: center;
       gap: 0.75rem;
       margin-top: 0.5rem;
     }
-
     .checkbox-group input[type="checkbox"] {
       width: 1.25rem;
       height: 1.25rem;
       accent-color: #788E7D;
       cursor: pointer;
     }
-
     .checkbox-group label {
       color: #d1d5db;
       font-size: 0.875rem;
       cursor: pointer;
     }
-
     .form-actions {
       display: flex;
       align-items: center;
       gap: 1rem;
       margin-top: 1rem;
     }
-
     .save-btn {
       background: #ffffff;
       color: #000000;
@@ -936,12 +991,10 @@ const DashboardStyles = () => (
       cursor: pointer;
       transition: all 0.2s;
     }
-
     .save-btn:hover {
       background: transparent;
       color: #ffffff;
     }
-
     .cancel-btn {
       background: transparent;
       color: #9ca3af;
@@ -953,18 +1006,15 @@ const DashboardStyles = () => (
       cursor: pointer;
       transition: color 0.2s;
     }
-
     .cancel-btn:hover {
       color: #ffffff;
     }
-
     .address-form-wrapper {
       border: 1px solid #2A2A2A;
       padding: 2rem;
       background: rgba(255,255,255,0.01);
       margin-bottom: 2rem;
     }
-
     .form-subtitle {
       font-size: 1.125rem;
       font-weight: 600;
@@ -973,19 +1023,16 @@ const DashboardStyles = () => (
       border-bottom: 1px solid #2A2A2A;
       padding-bottom: 1rem;
     }
-
     .address-list {
       display: grid;
       grid-template-columns: 1fr;
       gap: 1.5rem;
     }
-
     @media (min-width: 768px) {
       .address-list {
         grid-template-columns: repeat(2, 1fr);
       }
     }
-
     .address-card {
       border: 1px solid #2A2A2A;
       padding: 1.5rem;
@@ -993,20 +1040,17 @@ const DashboardStyles = () => (
       display: flex;
       flex-direction: column;
     }
-
     .address-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 1rem;
     }
-
     .address-name {
       font-weight: 600;
       color: #ffffff;
       font-size: 1.125rem;
     }
-
     .default-badge {
       background: rgba(120,142,125,0.2);
       color: #788E7D;
@@ -1015,13 +1059,11 @@ const DashboardStyles = () => (
       font-weight: 700;
       letter-spacing: 0.1em;
     }
-
     .address-line {
       color: #9ca3af;
       font-size: 0.875rem;
       margin-bottom: 0.25rem;
     }
-
     .address-phone {
       color: #d1d5db;
       font-size: 0.875rem;
@@ -1029,7 +1071,6 @@ const DashboardStyles = () => (
       padding-top: 1rem;
       border-top: 1px dashed #2A2A2A;
     }
-
     .address-actions {
       display: flex;
       justify-content: space-between;
@@ -1038,7 +1079,6 @@ const DashboardStyles = () => (
       padding-top: 1rem;
       border-top: 1px solid #2A2A2A;
     }
-
     .action-link {
       background: transparent;
       border: none;
@@ -1048,17 +1088,14 @@ const DashboardStyles = () => (
       cursor: pointer;
       padding: 0;
     }
-
     .action-link:hover {
       text-decoration: underline;
     }
-
     .action-icons {
       display: flex;
       gap: 1rem;
       margin-left: auto;
     }
-
     .icon-btn {
       background: transparent;
       border: none;
@@ -1067,44 +1104,36 @@ const DashboardStyles = () => (
       padding: 0.25rem;
       transition: color 0.2s;
     }
-
     .icon-btn:hover {
       color: #ffffff;
     }
-
     .delete-btn:hover {
       color: #ef4444;
     }
-
     .empty-state-text {
       color: #6b7280;
       font-size: 1rem;
     }
-    
     .loyalty-card {
       border: 1px solid #788E7D;
       padding: 2rem;
       background: rgba(120, 142, 125, 0.1);
       max-width: 32rem;
     }
-
     .loyalty-points {
       display: flex;
       align-items: center;
       gap: 1.5rem;
       margin-bottom: 1.5rem;
     }
-
     .text-gold {
       color: #fbbf24;
     }
-
     .points-number {
       font-size: 2rem;
       font-weight: 700;
       color: #ffffff;
     }
-
     .points-tier {
       color: #fbbf24;
       font-size: 0.875rem;
@@ -1112,14 +1141,12 @@ const DashboardStyles = () => (
       letter-spacing: 0.1em;
       font-weight: 600;
     }
-
     .empty-state-wrapper {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: 1.5rem;
     }
-
     .browse-shop-btn {
       background: #ffffff;
       color: #000000;
@@ -1130,23 +1157,19 @@ const DashboardStyles = () => (
       letter-spacing: 0.05em;
       transition: all 0.2s;
     }
-
     .browse-shop-btn:hover {
       background: #e5e7eb;
     }
-
     .order-list {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
     }
-
     .order-card {
       border: 1px solid #2A2A2A;
       padding: 1.5rem;
       background: transparent;
     }
-
     .order-header {
       display: flex;
       justify-content: space-between;
@@ -1155,18 +1178,15 @@ const DashboardStyles = () => (
       padding-bottom: 1rem;
       margin-bottom: 1rem;
     }
-
     .order-id {
       font-weight: 600;
       color: #ffffff;
     }
-
     .order-date {
       color: #6b7280;
       font-size: 0.875rem;
       margin-top: 0.25rem;
     }
-
     .order-status {
       font-size: 0.75rem;
       text-transform: uppercase;
@@ -1174,28 +1194,29 @@ const DashboardStyles = () => (
       font-weight: 600;
       padding: 0.25rem 0.5rem;
     }
-
-    .order-status.delivered { background: rgba(120,142,125,0.2); color: #788E7D; }
-    .order-status.pending { background: rgba(251,191,36,0.1); color: #fbbf24; }
-    
+    .order-status.delivered {
+      background: rgba(120,142,125,0.2);
+      color: #788E7D;
+    }
+    .order-status.pending {
+      background: rgba(251,191,36,0.1);
+      color: #fbbf24;
+    }
     .order-details {
       color: #d1d5db;
       margin-bottom: 1.5rem;
       line-height: 1.8;
       font-size: 0.875rem;
     }
-
     .order-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-
     .order-total {
       font-weight: 600;
       color: #ffffff;
     }
-
     .reorder-btn {
       border: 1px solid #ffffff;
       background: transparent;
@@ -1206,49 +1227,9 @@ const DashboardStyles = () => (
       font-weight: 600;
       transition: all 0.2s;
     }
-    
     .reorder-btn:hover {
       background: #ffffff;
       color: #000000;
-    }
-
-    .auth-helpers {
-      display: block;
-      width: 100%;
-      margin-top: -0.5rem;
-    }
-
-    .remember-me {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #9ca3af;
-      font-size: 0.875rem;
-      cursor: pointer;
-      margin-bottom: 1rem; 
-    }
-
-    .remember-me input[type="checkbox"] {
-      width: 1rem;
-      height: 1rem;
-      accent-color: #788E7D;
-      cursor: pointer;
-    }
-
-    .forgot-password {
-      background: transparent;
-      border: none;
-      color: #9ca3af;
-      font-size: 0.875rem;
-      cursor: pointer;
-      padding: 0;
-      display: block; 
-      text-align: left;
-    }
-
-    .forgot-password:hover {
-      color: #ffffff;
-      text-decoration: underline;
     }
   `}</style>
 );

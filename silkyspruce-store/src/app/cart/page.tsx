@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin, Loader2 } from 'lucide-react';
+import Script from 'next/script';
+import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { processCheckout } from '../actions/processCheckout';
 import { useUserStore } from '@/store/userStore';
@@ -23,13 +24,8 @@ export default function CartPage() {
   const [useNewAddress, setUseNewAddress] = useState(true);
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [shippingFee, setShippingFee] = useState(300); // Default fallback fee
-
-  // OpenStreetMap Autocomplete States
-  const [addressQuery, setAddressQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const autoCompleteRef = useRef<HTMLInputElement>(null);
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
 
   const [shippingDetails, setShippingDetails] = useState({
     country: "Kenya",
@@ -78,58 +74,45 @@ export default function CartPage() {
     };
 
     fetchSavedAddress();
-
-    // Close suggestions if clicked outside
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [user]);
 
-  // Free OpenStreetMap Geocoding
+  // Safely Initialize Google Maps Autocomplete only when the input field is visible
   useEffect(() => {
-    const fetchLocations = async () => {
-      if (addressQuery.trim().length < 3) {
-        setSuggestions([]);
-        return;
+    if (!isGoogleLoaded || !useNewAddress || !autoCompleteRef.current) return;
+
+    const autocomplete = new (window as any).google.maps.places.Autocomplete(autoCompleteRef.current, {
+      componentRestrictions: { country: ["ke", "ug", "tz"] },
+      fields: ["formatted_address", "geometry", "name"],
+    });
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      
+      if (place.geometry && place.geometry.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const formattedAddress = place.formatted_address || place.name;
+
+        // Strip Kenya/Uganda text from formatted address to keep it clean
+        const cleanAddress = formattedAddress.replace(', Kenya', '').replace(', Uganda', '');
+
+        setShippingDetails(prev => ({
+          ...prev,
+          street: cleanAddress,
+          lat: lat,
+          lng: lng
+        }));
+
+        setShippingFee(calculateShippingFee(lat, lng));
       }
-      setIsSearching(true);
-      try {
-        // Query Nominatim (OpenStreetMap) restricted to East Africa
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressQuery)}&countrycodes=ke,ug,tz&limit=5`);
-        const data = await res.json();
-        setSuggestions(data);
-        setShowSuggestions(true);
-      } catch (err) {
-        console.error("Geocoding failed", err);
+    });
+
+    return () => {
+      if ((window as any).google) {
+        (window as any).google.maps.event.removeListener(listener);
       }
-      setIsSearching(false);
     };
-
-    const debounceTimer = setTimeout(fetchLocations, 600); // 600ms delay protects against rate limits
-    return () => clearTimeout(debounceTimer);
-  }, [addressQuery]);
-
-  const handleLocationSelect = (place: any) => {
-    // Nominatim returns longitude as "lon"
-    const lat = parseFloat(place.lat);
-    const lng = parseFloat(place.lon);
-    
-    setAddressQuery(place.display_name);
-    setShowSuggestions(false);
-    
-    setShippingDetails(prev => ({
-      ...prev,
-      street: place.display_name,
-      lat: lat,
-      lng: lng
-    }));
-
-    setShippingFee(calculateShippingFee(lat, lng));
-  };
+  }, [isGoogleLoaded, useNewAddress]);
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
@@ -226,6 +209,13 @@ export default function CartPage() {
 
   return (
     <div className="cart-container">
+      {/* Script loaded with correct async attribute and onReady handler */}
+      <Script 
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places&loading=async`} 
+        strategy="afterInteractive" 
+        onReady={() => setIsGoogleLoaded(true)}
+      />
+
       <h1 className="cart-title">Your Cart</h1>
       <div className="cart-layout">
         
@@ -385,39 +375,19 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      {/* FREE OPENSTREETMAP AUTOCOMPLETE */}
-                      <div className="search-container" ref={searchRef}>
+                      {/* GOOGLE MAPS AUTOCOMPLETE */}
+                      <div className="search-container">
                         <label className="shipping-label">Search Location / Street Address</label>
                         <div className="search-input-wrapper">
                           <MapPin size={18} className="search-icon" />
                           <input 
+                            ref={autoCompleteRef}
                             type="text" 
-                            value={addressQuery}
-                            onChange={(e) => {
-                              setAddressQuery(e.target.value);
-                              setShowSuggestions(true);
-                            }}
-                            onFocus={() => setShowSuggestions(true)}
+                            defaultValue={shippingDetails.street}
                             placeholder="Start typing to search..."
                             className="shipping-input shipping-input-search"
                           />
-                          {isSearching && <Loader2 size={16} className="search-spinner" />}
                         </div>
-
-                        {showSuggestions && suggestions.length > 0 && (
-                          <div className="search-suggestions">
-                            {suggestions.map((place, i) => (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => handleLocationSelect(place)}
-                                className="search-suggestion-btn"
-                              >
-                                {place.display_name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
                         <span className="search-helper-text">Select an address from the dropdown to calculate delivery.</span>
                       </div>
 
@@ -865,45 +835,6 @@ const CartStyles = () => (
       transform: translateY(-50%);
       color: #6b7280;
     }
-    .search-spinner {
-      position: absolute;
-      right: 0.75rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #6b7280;
-      animation: spin 1s linear infinite;
-    }
-    .search-suggestions {
-      position: absolute;
-      z-index: 50;
-      width: 100%;
-      background: #1A1A1A;
-      border: 1px solid #2A2A2A;
-      top: 100%;
-      margin-top: 0.25rem;
-      max-height: 15rem;
-      overflow-y: auto;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-    .search-suggestion-btn {
-      width: 100%;
-      text-align: left;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      color: #d1d5db;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid #2A2A2A;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .search-suggestion-btn:hover {
-      background: #2A2A2A;
-      color: #ffffff;
-    }
-    .search-suggestion-btn:last-child {
-      border-bottom: none;
-    }
     .search-helper-text {
       font-size: 0.625rem;
       color: #788E7D;
@@ -940,9 +871,22 @@ const CartStyles = () => (
       border-top: 1px solid #2A2A2A;
       padding-top: 1.5rem;
     }
-    @keyframes spin {
-      from { transform: translateY(-50%) rotate(0deg); }
-      to { transform: translateY(-50%) rotate(360deg); }
+    .pac-container {
+      background-color: #1A1A1A !important;
+      border: 1px solid #2A2A2A !important;
+      color: white !important;
+      font-family: inherit !important;
+    }
+    .pac-item {
+      color: #9ca3af !important;
+      border-top: 1px solid #2A2A2A !important;
+      padding: 10px !important;
+    }
+    .pac-item:hover {
+      background-color: #2A2A2A !important;
+    }
+    .pac-item-query {
+      color: white !important;
     }
   `}</style>
 );
