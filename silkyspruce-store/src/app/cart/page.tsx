@@ -76,11 +76,15 @@ export default function CartPage() {
     fetchSavedAddress();
   }, [user]);
 
-  // Safely Initialize Google Maps Autocomplete only when the input field is visible
-  useEffect(() => {
-    if (!isGoogleLoaded || !useNewAddress || !autoCompleteRef.current) return;
+  // Safely Initialize Google Maps Autocomplete only when the input field and Google object are ready
+    useEffect(() => {
+    // Defensive check to prevent crashes if Google Maps fails to load due to missing/invalid API keys
+    const googleMaps = (window as any).google?.maps;
+    if (!isGoogleLoaded || !useNewAddress || !autoCompleteRef.current || !googleMaps?.places) {
+      return;
+    }
 
-    const autocomplete = new (window as any).google.maps.places.Autocomplete(autoCompleteRef.current, {
+    const autocomplete = new googleMaps.places.Autocomplete(autoCompleteRef.current, {
       componentRestrictions: { country: ["ke", "ug", "tz"] },
       fields: ["formatted_address", "geometry", "name"],
     });
@@ -93,7 +97,6 @@ export default function CartPage() {
         const lng = place.geometry.location.lng();
         const formattedAddress = place.formatted_address || place.name;
 
-        // Strip Kenya/Uganda text from formatted address to keep it clean
         const cleanAddress = formattedAddress.replace(', Kenya', '').replace(', Uganda', '');
 
         setShippingDetails(prev => ({
@@ -108,11 +111,11 @@ export default function CartPage() {
     });
 
     return () => {
-      if ((window as any).google) {
-        (window as any).google.maps.event.removeListener(listener);
+      if (googleMaps) {
+        googleMaps.event.removeListener(listener);
       }
     };
-  }, [isGoogleLoaded, useNewAddress]);
+  }, [isGoogleLoaded, useNewAddress]);  
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
@@ -211,7 +214,7 @@ export default function CartPage() {
     <div className="cart-container">
       {/* Script loaded with correct async attribute and onReady handler */}
       <Script 
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.GOOGLE_MAPS_KEY}&libraries=places&loading=async`} 
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places&loading=async`} 
         strategy="afterInteractive" 
         onReady={() => setIsGoogleLoaded(true)}
       />
