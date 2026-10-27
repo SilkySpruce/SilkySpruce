@@ -214,9 +214,9 @@ export default function CartPage() {
     <div className="cart-container">
       {/* Script loaded with correct async attribute and onReady handler */}
       <Script 
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places&loading=async`} 
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places`} 
         strategy="afterInteractive" 
-        onReady={() => setIsGoogleLoaded(true)}
+        onLoad={() => setIsGoogleLoaded(true)}
       />
 
       <h1 className="cart-title">Your Cart</h1>
