@@ -10,6 +10,11 @@ export default function MaintenanceMode() {
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Under Maintenance</h1>
         <p className="text-sm text-gray-600">
           Silky Spruce is currently undergoing scheduled updates to improve your experience. We will be back online shortly. Thank you for your patience!
+          Contact us at {" "}
+          <a href="mailto:fountaincreations@gmail.com" className="underline hover:text-gray-900">fountaincreations@gmail.com</a>{" "}
+          or call us at {" "}
+          <a href="tel:+254757225004" className="underline hover:text-gray-900">+254 757 225 004</a>{" "} 
+          to make an order or for any inquiries.
         </p>
       </div>
     </main>

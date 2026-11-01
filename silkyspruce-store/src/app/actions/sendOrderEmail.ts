@@ -39,7 +39,7 @@ export async function sendOrderEmails(orderData: OrderData) {
   try {
     // 1. Send Email to Admin (Store Owner)
     const adminEmailPromise = resend.emails.send({
-      from: 'Silky Spruce Orders <onboarding@resend.dev>',
+      from: 'Silky Spruce Orders <orders@silkyspruce.com>',
       to: 'fountaincreations@gmail.com',
       subject: `🚨 New Order Received! #${orderId}`,
       html: `
@@ -67,11 +67,9 @@ export async function sendOrderEmails(orderData: OrderData) {
     });
 
     // 2. Send Email to Customer
-    // NOTE: 'to' is hardcoded to your email for testing. 
-    // Change 'to: fountaincreations@gmail.com' to 'to: customer.email' once your domain is verified on Resend.
     const customerEmailPromise = resend.emails.send({
-      from: 'Silky Spruce <onboarding@resend.dev>',
-      to: 'fountaincreations@gmail.com', 
+      from: 'Silky Spruce <orders@silkyspruce.com>',
+      to: customer.email, 
       subject: `Order Confirmation #${orderId} - Silky Spruce`,
       html: `
         <div style="font-family: sans-serif; color: #111;">

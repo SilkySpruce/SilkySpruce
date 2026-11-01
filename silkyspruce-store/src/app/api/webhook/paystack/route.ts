@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { globalRatelimit } from '@/lib/ratelimit';
+import { headers } from 'next/headers';
 
 // Initialize Supabase with the Service Role Key to safely bypass RLS in backend server code
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -8,6 +10,14 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(req: Request) {
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ?? headersList.get('x-real-ip') ?? '127.0.0.1';
+  
+  const { success } = await globalRatelimit.limit(`webhook_${ip}`);
+  if (!success) {
+    return NextResponse.json({ message: 'Rate limit exceeded' }, { status: 429 });
+  }
+
   try {
     // Paystack requires the raw body string to calculate and verify the HMAC SHA512 signature
     const body = await req.text();
@@ -17,7 +27,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Missing signature' }, { status: 400 });
     }
 
-    // Verify the request genuinely came from Paystack using your Live Secret Key
+    // Verify the request genuinely came from Paystack using the Live Secret Key
     const secret = process.env.PAYSTACK_SECRET_KEY || '';
     const hash = crypto.createHmac('sha512', secret).update(body).digest('hex');
 

@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from '@supabase/supabase-js';
+import { headers } from 'next/headers';
+import { strictRatelimit } from '@/lib/ratelimit';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,6 +17,14 @@ interface CancelOrderParams {
 }
 
 export async function cancelOrder({ orderNumber, userId, reason, isAdmin = false }: CancelOrderParams) {
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ?? headersList.get('x-real-ip') ?? '127.0.0.1';
+  
+  const { success } = await strictRatelimit.limit(`strict_${ip}`);
+  if (!success) {
+    return { success: false, error: 'Too many requests. Please try again in a minute.' };
+  }
+
   try {
     // 1. FETCH ORDER & VERIFY OWNERSHIP
     const { data: order, error: orderError } = await supabaseAdmin

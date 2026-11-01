@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useUserStore } from '@/store/userStore';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cartStore';
+import DeleteAccountFlow from './DeleteAccountFlow';
 
 interface Address {
   id: string;
@@ -421,6 +422,7 @@ export default function AccountPage() {
                 </div>
                 <button type="submit" className="save-btn">SAVE CHANGES</button>
               </form>
+              <DeleteAccountFlow />
             </section>
           )}
 

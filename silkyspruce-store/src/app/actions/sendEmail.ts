@@ -1,10 +1,20 @@
 "use server";
 
 import { Resend } from 'resend';
+import { headers } from 'next/headers';
+import { strictRatelimit } from '@/lib/ratelimit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendContactEmail(formData: FormData) {
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ?? headersList.get('x-real-ip') ?? '127.0.0.1';
+  
+  const { success } = await strictRatelimit.limit(`strict_${ip}`);
+  if (!success) {
+    return { success: false, error: 'Too many requests. Please try again in a minute.' };
+  }
+
   const firstName = formData.get('firstName') as string;
   const lastName = formData.get('lastName') as string;
   const email = formData.get('email') as string;
@@ -12,11 +22,9 @@ export async function sendContactEmail(formData: FormData) {
 
   try {
     const { data, error } = await resend.emails.send({
-      // Until you verify a custom domain like silkyspruce.co.ke, 
-      // Resend requires you to send FROM this testing address:
-      from: 'Silky Spruce <onboarding@resend.dev>',
+      from: 'Silky Spruce <hello@silkyspruce.com>',
       to: 'fountaincreations@gmail.com',
-      replyTo: email, // This allows you to click "Reply" in Gmail and email the customer directly
+      replyTo: email, 
       subject: `New Message from ${firstName} ${lastName}`,
       text: `Name: ${firstName} ${lastName}\nEmail: ${email}\n\nMessage:\n${message}`,
     });

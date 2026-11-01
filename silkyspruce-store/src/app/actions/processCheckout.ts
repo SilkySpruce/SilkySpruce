@@ -1,5 +1,7 @@
 "use server";
-
+import { Resend } from 'resend';
+import { strictRatelimit } from '@/lib/ratelimit';
+import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { sendOrderEmails } from './sendOrderEmail';
 import { calculateShippingFee } from '@/utils/shipping';
@@ -9,6 +11,8 @@ const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface CheckoutPayload {
   userId?: string;
@@ -33,6 +37,14 @@ interface CheckoutPayload {
 }
 
 export async function processCheckout(payload: CheckoutPayload) {
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ?? headersList.get('x-real-ip') ?? '127.0.0.1';
+  
+  const { success } = await strictRatelimit.limit(`strict_${ip}`);
+  if (!success) {
+    return { success: false, error: 'Too many requests. Please try again in a minute.' };
+  }
+
   try {
     let finalAddress = payload.customer.address;
 
