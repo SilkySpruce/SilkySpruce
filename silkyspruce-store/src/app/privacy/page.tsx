@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
 
           <h2 className="text-xl font-semibold text-white mt-4">5. Contact Us</h2>
           <p>
-            If you have any questions about this privacy policy or our privacy practices, please contact us at support@silkyspruce.com.
+            If you have any questions about this privacy policy or our privacy practices, please contact us at fountaincreations@gmail.com.
           </p>
         </section>
       </div>

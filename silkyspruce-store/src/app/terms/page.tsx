@@ -36,7 +36,7 @@ export default function TermsOfService() {
 
           <h2 className="text-xl font-semibold text-white mt-4">6. Contact Information</h2>
           <p>
-            Questions about the Terms of Service should be sent to us at support@silkyspruce.com.
+            Questions about the Terms of Service should be sent to us at fountaincreations@gmail.com.
           </p>
         </section>
       </div>
