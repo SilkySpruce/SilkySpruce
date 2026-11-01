@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import MaintenanceMode from "@/components/MaintenanceMode";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,11 +13,11 @@ export const metadata: Metadata = {
     default: 'Silky Spruce | Handcrafted Plant Based Skincare'
   },
   description: 'Natural, handcrafted plant based skincare, soaps, and wellness rituals made in Kenya.',
-  metadataBase: new URL('https://silkyspruce.co.ke'), // Replace with your actual domain when you buy it
+  metadataBase: new URL('https://silkyspruce.com'), 
   openGraph: {
     title: 'Silky Spruce | Handcrafted Plant Based Skincare',
     description: 'Natural, handcrafted plant based skincare, soaps, and wellness rituals made in Kenya.',
-    url: 'https://silkyspruce.co.ke',
+    url: 'https://silkyspruce.com',
     siteName: 'Silky Spruce',
     images: [
       {
@@ -41,12 +42,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isMaintenance = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true";
+
   return (
     <html lang="en">
       <body className={`${inter.className} bg-[#111111] text-white antialiased min-h-screen flex flex-col`}>
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+        {isMaintenance ? (
+          <MaintenanceMode />
+        ) : (
+          <>
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+          </>
+        )}
       </body>
     </html>
   );
