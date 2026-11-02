@@ -7,7 +7,7 @@ import { useUserStore } from '@/store/userStore';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cartStore';
 import DeleteAccountFlow from './DeleteAccountFlow';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAlert } from '@/components/CustomAlert';
 
 interface Address {
@@ -24,6 +24,7 @@ function AccountPageContent() {
   const { user, isAuthenticated, loginUser, logoutUser } = useUserStore();
   const { clearCart } = useCartStore();
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [activeTab, setActiveTab] = useState('profile');
@@ -82,7 +83,7 @@ function AccountPageContent() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/account`,
+        redirectTo: `${window.location.origin}/`,
       },
     });
     
@@ -116,6 +117,7 @@ function AccountPageContent() {
           setAuthError('This email is already registered. Please sign in.');
         } else {
           setAuthMessage('Account created successfully!');
+          router.push('/');
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -135,6 +137,8 @@ function AccountPageContent() {
           localStorage.removeItem('silky_remembered_password');
           localStorage.removeItem('silky_remember_me');
         }
+
+        router.push('/');
       }
     } catch (error: any) {
       setAuthError(error.message);

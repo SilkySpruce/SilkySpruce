@@ -17,6 +17,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 interface CheckoutPayload {
   userId?: string;
   pointsUsed: number;
+  isPickup?: boolean;
   customer: {
     firstName: string;
     lastName: string;
@@ -51,8 +52,8 @@ export async function processCheckout(payload: CheckoutPayload) {
     // -----------------------------------------------------------------
     // 0. SAVE/FETCH USER ADDRESS
     // -----------------------------------------------------------------
-    if (payload.userId) {
-      // If new coordinates were passed, save them to the address book
+    if (payload.userId && !payload.isPickup) {
+      // If new coordinates were passed (and it is NOT a store pickup), save them
       if (payload.customer.latitude && payload.customer.longitude) {
         // Clear old defaults first
         await supabaseAdmin
@@ -120,12 +121,13 @@ export async function processCheckout(payload: CheckoutPayload) {
     // -----------------------------------------------------------------
     const subtotal = payload.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    // The backend dynamically calculates the fee based on the exact coordinates passed.
-    // If coordinates are missing, it safely falls back to the default 300 configured in the utility.
-    const shippingFee = calculateShippingFee(
-      payload.customer.latitude || 0,
-      payload.customer.longitude || 0
-    );
+    // Force shipping to 0 if they select pickup, otherwise calculate dynamically
+    const shippingFee = payload.isPickup
+      ? 0
+      : calculateShippingFee(
+          payload.customer.latitude || 0,
+          payload.customer.longitude || 0
+        );
     
     const totalAmount = subtotal - payload.pointsUsed + shippingFee;
     
