@@ -17,6 +17,9 @@ const PaystackButton = dynamic(() => import('@/components/PaystackButton'), { ss
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart } = useCartStore();
+  const { user, isAuthenticated } = useUserStore();
+  const router = useRouter();
+
   const [usePoints, setUsePoints] = useState(false);
   
   // Address & Geocoding State
@@ -36,8 +39,6 @@ export default function CartPage() {
     lng: null as number | null
   });
 
-  const { user } = useUserStore();
-  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   
   useEffect(() => {
@@ -129,13 +130,18 @@ export default function CartPage() {
 
   const config = {
     reference: `ORD-${new Date().getTime()}`,
-    email: user?.email || "guest@silkyspruce.co.ke",
+    email: user?.email || "",
     amount: total * 100, 
     currency: 'KES',
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
   };
 
   const validateCheckout = () => {
+    if (!isAuthenticated || !user) {
+      alert("Please sign in or create an account to proceed to checkout.");
+      router.push('/account');
+      return false;
+    }
     if (items.length === 0) {
       alert("Your cart is empty!");
       return false;
@@ -178,22 +184,29 @@ export default function CartPage() {
       }))
     };
     
-    alert(isSandbox ? "Processing sandbox order..." : "Payment successful. Saving your order.");
-    const result = await processCheckout(checkoutPayload);
+    try {
+      const result = await processCheckout(checkoutPayload);
 
-    if (result.success) {
-      alert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`);
-      
-      if (user) {
-        useUserStore.setState({ 
-          user: { ...user, loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + (result.pointsEarned || 0) } 
-        });
+      if (result.success) {
+        alert(`Order ${result.orderNumber} placed successfully! You earned ${result.pointsEarned || 0} loyalty points.`);
+        
+        if (user) {
+          useUserStore.setState({ 
+            user: { ...user, loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + (result.pointsEarned || 0) } 
+          });
+        }
+
+        // 1. Clear cart state in store and localStorage (resets navbar count badge to 0)
+        clearCart();
+
+        // 2. Redirect to Account Page -> Order History tab
+        router.push('/account?tab=orders');
+      } else {
+        alert(`Payment / Order Processing Failed: ${result.error}\n\nPlease verify your details and try again.`);
       }
-
-      clearCart();
-      router.push('/account');
-    } else {
-      alert(`Error: ${result.error}`);
+    } catch (err: any) {
+      console.error("Checkout execution error:", err);
+      alert(`An error occurred while placing your order: ${err.message || 'Please try again.'}`);
     }
   };
 
@@ -415,14 +428,28 @@ export default function CartPage() {
               <span>KSh {total}</span>
             </div>
 
-            {process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true' ? (
+            {!isAuthenticated ? (
+              <button 
+                className="checkout-btn" 
+                onClick={() => {
+                  alert("Please sign in or create an account to complete your purchase.");
+                  router.push('/account');
+                }}
+              >
+                SIGN IN TO CHECKOUT
+              </button>
+            ) : process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true' ? (
               <button className="checkout-btn" onClick={() => executeCheckout(true)}>
                 PROCEED TO CHECKOUT (SANDBOX)
               </button>
             ) : (
               <PaystackButton 
-                config={config} onSuccess={() => executeCheckout(false)} onClose={() => alert("Payment cancelled.")} 
-                onValidation={validateCheckout} className="checkout-btn" text="PROCEED TO CHECKOUT"
+                config={config} 
+                onSuccess={() => executeCheckout(false)} 
+                onClose={() => alert("Payment was cancelled or interrupted. You can retry your payment at any time.")} 
+                onValidation={validateCheckout} 
+                className="checkout-btn" 
+                text="PROCEED TO CHECKOUT"
               />
             )}
             
