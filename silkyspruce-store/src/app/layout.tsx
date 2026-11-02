@@ -38,6 +38,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { AlertProvider } from "@/components/CustomAlert";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,14 +53,15 @@ export default function RootLayout({
         {isMaintenance ? (
           <MaintenanceMode />
         ) : (
-          <>
+          <AlertProvider>
             <Navbar />
             <main className="flex-grow">{children}</main>
             <Footer />
-          </>
+          </AlertProvider>
         )}
         <Analytics />
       </body>
     </html>
   );
 }
+

@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 import { calculateShippingFee } from '@/utils/shipping';
+import { useAlert } from '@/components/CustomAlert';
 
 const PaystackButton = dynamic(() => import('@/components/PaystackButton'), { ssr: false });
 
@@ -26,6 +27,7 @@ export default function CartPage() {
   const [shippingFee, setShippingFee] = useState(300); // Default fallback fee
   const autoCompleteRef = useRef<HTMLInputElement>(null);
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+  const { showAlert } = useAlert();
 
   const [shippingDetails, setShippingDetails] = useState({
     country: "Kenya",
@@ -135,20 +137,24 @@ export default function CartPage() {
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
   };
 
-  const validateCheckout = () => {
-    if (items.length === 0) {
-      alert("Your cart is empty!");
-      return false;
-    }
+ const validateCheckout =(): boolean => {
+  if (items.length === 0) {
+     showAlert("Your cart is empty!", {
+      title: "Cart Empty",
+    });
+    return false;
+  }
     if (useNewAddress && (!shippingDetails.lat || !shippingDetails.lng)) {
-      alert("Please select a valid address from the dropdown suggestions so we can calculate delivery.");
+       showAlert("Please select a valid address from the dropdown suggestions so we can calculate delivery.", {
+        title: "Invalid Address",
+      });
       return false;
     }
     return true;
   };
 
   const executeCheckout = async (isSandbox = false) => {
-    if (!validateCheckout()) return;
+    if (!(await validateCheckout())) return;
 
     if (isSandbox) {
       const confirmed = window.confirm("SANDBOX MODE: Click OK to simulate a successful payment.");
@@ -178,12 +184,13 @@ export default function CartPage() {
       }))
     };
     
-    alert(isSandbox ? "Processing sandbox order..." : "Payment successful. Saving your order.");
     const result = await processCheckout(checkoutPayload);
 
     if (result.success) {
-      alert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`);
-      
+      await showAlert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`, {
+        title: "Order Placed",
+      });
+
       if (user) {
         useUserStore.setState({ 
           user: { ...user, loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + (result.pointsEarned || 0) } 
@@ -193,7 +200,9 @@ export default function CartPage() {
       clearCart();
       router.push('/account');
     } else {
-      alert(`Error: ${result.error}`);
+      await showAlert(result.error ?? "Something went wrong. Please try again.", {
+        title: "Order Failed",
+      });
     }
   };
 
@@ -421,7 +430,9 @@ export default function CartPage() {
               </button>
             ) : (
               <PaystackButton 
-                config={config} onSuccess={() => executeCheckout(false)} onClose={() => alert("Payment cancelled.")} 
+                config={config} onSuccess={() => executeCheckout(false)} onClose={() => {
+    showAlert("Payment cancelled.", { title: "Payment Cancelled" });
+  }}
                 onValidation={validateCheckout} className="checkout-btn" text="PROCEED TO CHECKOUT"
               />
             )}

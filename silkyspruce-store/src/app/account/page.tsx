@@ -7,6 +7,7 @@ import { useUserStore } from '@/store/userStore';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cartStore';
 import DeleteAccountFlow from './DeleteAccountFlow';
+import { useAlert } from '@/components/CustomAlert';
 
 interface Address {
   id: string;
@@ -23,6 +24,7 @@ export default function AccountPage() {
   const { clearCart } = useCartStore();
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [activeTab, setActiveTab] = useState('profile');
+  const { showAlert } = useAlert();
 
   // Auth Form State
   const [email, setEmail] = useState('');
@@ -117,9 +119,13 @@ export default function AccountPage() {
     });
     
     if (error) {
-      alert("Failed to update profile: " + error.message);
+      await showAlert("Failed to update profile: " + error.message, {
+      title: "Update Failed",
+      });
     } else {
-      alert("Profile updated successfully!");
+      await showAlert("Profile updated successfully!", {
+        title: "Update Successful",
+      });
     }
   };
 
@@ -235,7 +241,9 @@ export default function AccountPage() {
       setShowAddressForm(false);
       setNewAddress({ recipientName: '', phone: '', streetAddress: '', apartment: '', city: '', isDefault: false });
     } else {
-      alert("Error saving address: " + error.message);
+      await showAlert("Error saving address: " + error.message, {
+        title: "Address Not Saved",
+      });
     }
   };
 
