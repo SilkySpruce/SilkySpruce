@@ -10,6 +10,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   image: string;
+  stock?: number; // Max available stock (optional so old saved carts don't break)
 }
 
 interface CartState {
@@ -24,21 +25,31 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
-      addItem: (item) =>
+            addItem: (item) =>
         set((state) => {
+          const max = item.stock ?? Infinity;
+
           // Check if this exact product size is already in the cart
           const existingItem = state.items.find((i) => i.id === item.id);
-          
-          // If it is, just increase the quantity
+
+          // If it is, just increase the quantity (never past stock)
           if (existingItem) {
             return {
               items: state.items.map((i) =>
-                i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+                i.id === item.id
+                  ? {
+                      ...i,
+                      quantity: Math.min(i.quantity + item.quantity, max),
+                      stock: item.stock ?? i.stock,
+                    }
+                  : i
               ),
             };
           }
-          // If it's a new item, add it to the array
-          return { items: [...state.items, item] };
+          // If it's a new item, add it to the array (never past stock)
+          return {
+            items: [...state.items, { ...item, quantity: Math.min(item.quantity, max) }],
+          };
         }),
         
       removeItem: (id) =>
@@ -50,8 +61,9 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.map((i) => {
             if (i.id === id) {
-              // Ensure quantity never goes below 1
-              const newQuantity = Math.max(1, i.quantity + delta);
+              const max = i.stock ?? Infinity;
+              // Quantity stays between 1 and the available stock
+              const newQuantity = Math.min(max, Math.max(1, i.quantity + delta));
               return { ...i, quantity: newQuantity };
             }
             return i;
