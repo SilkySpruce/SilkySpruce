@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
-import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin } from 'lucide-react';
+import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin, Store } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { processCheckout } from '../actions/processCheckout';
 import { useUserStore } from '@/store/userStore';
@@ -12,20 +12,27 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 import { calculateShippingFee } from '@/utils/shipping';
+import { useAlert } from '@/components/CustomAlert';
 
 const PaystackButton = dynamic(() => import('@/components/PaystackButton'), { ssr: false });
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart } = useCartStore();
+  const { user, isAuthenticated } = useUserStore();
+  const router = useRouter();
+
   const [usePoints, setUsePoints] = useState(false);
   
-  // Address & Geocoding State
+  // Address, Geocoding & Delivery State
+  const [deliveryMethod, setDeliveryMethod] = useState<'saved' | 'new' | 'pickup'>('new');
   const [savedAddress, setSavedAddress] = useState<string | null>(null);
-  const [useNewAddress, setUseNewAddress] = useState(true);
+  const [savedCoords, setSavedCoords] = useState<{lat: number, lng: number} | null>(null);
+  
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [shippingFee, setShippingFee] = useState(300); // Default fallback fee
   const autoCompleteRef = useRef<HTMLInputElement>(null);
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+  const { showAlert } = useAlert();
 
   const [shippingDetails, setShippingDetails] = useState({
     country: "Kenya",
@@ -36,8 +43,6 @@ export default function CartPage() {
     lng: null as number | null
   });
 
-  const { user } = useUserStore();
-  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   
   useEffect(() => {
@@ -63,7 +68,8 @@ export default function CartPage() {
             lng: data.longitude || null
           });
           setSavedAddress(`${data.street_address || data.address_line_1}, ${data.city}`);
-          setUseNewAddress(false);
+          setSavedCoords({ lat: data.latitude, lng: data.longitude });
+          setDeliveryMethod('saved');
 
           if (data.latitude && data.longitude) {
             setShippingFee(calculateShippingFee(data.latitude, data.longitude));
@@ -80,7 +86,7 @@ export default function CartPage() {
     useEffect(() => {
     // Defensive check to prevent crashes if Google Maps fails to load due to missing/invalid API keys
     const googleMaps = (window as any).google?.maps;
-    if (!isGoogleLoaded || !useNewAddress || !autoCompleteRef.current || !googleMaps?.places) {
+    if (!isGoogleLoaded || deliveryMethod !== 'new' || !autoCompleteRef.current || !googleMaps?.places) {
       return;
     }
 
@@ -115,40 +121,53 @@ export default function CartPage() {
         googleMaps.event.removeListener(listener);
       }
     };
-  }, [isGoogleLoaded, useNewAddress]);  
+  }, [isGoogleLoaded, deliveryMethod]);  
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
   const pointsApplied = usePoints ? maxPoints : 0;
   const total = subtotal - pointsApplied + (items.length > 0 ? shippingFee : 0);
+  const isFreeOrder = total <= 0; // fully covered by loyalty points, no payment needed
 
   const getFinalAddress = () => {
-    if (!useNewAddress && savedAddress) return savedAddress;
+    if (deliveryMethod === 'pickup') return "Pickup at: Tom Mboya Street, platinum plaza, 3rd floor shop 305, CBD Nairobi";
+    if (deliveryMethod === 'saved' && savedAddress) return savedAddress;
     return `${shippingDetails.street}${shippingDetails.apartment ? `, ${shippingDetails.apartment}` : ''}, ${shippingDetails.city}, ${shippingDetails.country}`;
   };
 
   const config = {
     reference: `ORD-${new Date().getTime()}`,
-    email: user?.email || "guest@silkyspruce.co.ke",
+    email: user?.email || "",
     amount: total * 100, 
     currency: 'KES',
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
   };
 
   const validateCheckout = () => {
-    if (items.length === 0) {
-      alert("Your cart is empty!");
+    if (!isAuthenticated || !user) {
+      showAlert("Please sign in or create an account to complete your purchase.", {
+        title: "Authentication Required",
+      });
+      router.push('/account');
       return false;
     }
-    if (useNewAddress && (!shippingDetails.lat || !shippingDetails.lng)) {
-      alert("Please select a valid address from the dropdown suggestions so we can calculate delivery.");
+    if (items.length === 0) {
+      showAlert("Your cart is empty!", {
+        title: "Empty Cart",
+      });
+      return false;
+    }
+    if (deliveryMethod === 'new' && (!shippingDetails.lat || !shippingDetails.lng)) {
+       showAlert("Please select a valid address from the dropdown suggestions so we can calculate delivery.", {
+        title: "Invalid Address",
+      });
       return false;
     }
     return true;
   };
 
-  const executeCheckout = async (isSandbox = false) => {
-    if (!validateCheckout()) return;
+  const executeCheckout = async (isSandbox = false, isFree = false) => {
+    if (!(await validateCheckout())) return;
 
     if (isSandbox) {
       const confirmed = window.confirm("SANDBOX MODE: Click OK to simulate a successful payment.");
@@ -159,15 +178,16 @@ export default function CartPage() {
     const checkoutPayload = {
       userId: user?.id,
       pointsUsed: pointsApplied, 
+      isPickup: deliveryMethod === 'pickup',
       customer: {
         firstName: user?.firstName || "Guest",
         lastName: user?.lastName || "User",
         email: user?.email || "guest@silkyspruce.co.ke",
         phone: user?.phone || "+254700000000",
         address: finalAddress,
-        latitude: shippingDetails.lat,
-        longitude: shippingDetails.lng,
-        city: shippingDetails.city
+        latitude: deliveryMethod === 'pickup' ? -1.28578 : (deliveryMethod === 'saved' ? savedCoords?.lat : shippingDetails.lat),
+        longitude: deliveryMethod === 'pickup' ? 36.82189 : (deliveryMethod === 'saved' ? savedCoords?.lng : shippingDetails.lng),
+        city: deliveryMethod === 'pickup' ? 'Nairobi' : shippingDetails.city
       },
       items: items.map(item => ({
         id: item.id,
@@ -177,23 +197,45 @@ export default function CartPage() {
         price: item.price
       }))
     };
-    
-    alert(isSandbox ? "Processing sandbox order..." : "Payment successful. Saving your order.");
-    const result = await processCheckout(checkoutPayload);
 
-    if (result.success) {
-      alert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`);
-      
-      if (user) {
-        useUserStore.setState({ 
-          user: { ...user, loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + (result.pointsEarned || 0) } 
+    showAlert(
+      isFree
+        ? "Placing your order..."
+        : isSandbox
+        ? "Processing sandbox order..."
+        : "Payment successful. Saving your order.",
+      { title: isFree ? "Placing Order" : isSandbox ? "Sandbox Order" : "Order Placed" }
+    );
+
+    try {
+      const result = await processCheckout(checkoutPayload);
+
+      if (result.success) {
+        await showAlert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`, {
+          title: "Order Placed",
+        });
+        
+        if (user) {
+          useUserStore.setState({ 
+            user: { ...user, loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + (result.pointsEarned || 0) } 
+          });
+        }
+
+        // 1. Clear cart state in store and localStorage (resets navbar count badge to 0)
+        clearCart();
+
+        // 2. Redirect to Account Page -> Order History tab
+        router.push('/account?tab=orders');
+      } else {
+        showAlert(`Payment / Order Processing Failed: ${result.error}\n\nPlease verify your details and try again.`, {
+          title: "Order Failed",
         });
       }
-
-      clearCart();
-      router.push('/account');
-    } else {
-      alert(`Error: ${result.error}`);
+    } catch (err: any) {
+      console.error("Checkout execution error:", err);
+      showAlert(`An error occurred while placing your order: ${err.message || 'Please try again.'}`, {
+        title: "Order Error",
+      });
     }
   };
 
@@ -244,7 +286,10 @@ export default function CartPage() {
                     <div className="qty-controls mobile-qty">
                       <button onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
                       <span>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
+                      <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                        disabled={item.stock !== undefined && item.quantity >= item.stock}
+                      ><Plus size={14} /></button>
                     </div>
                   </div>
                 </div>
@@ -317,12 +362,12 @@ export default function CartPage() {
                     <label className="shipping-radio-label">
                       <input 
                         type="radio" 
-                        name="address_choice" 
-                        checked={!useNewAddress}
+                        name="delivery_method" 
+                        checked={deliveryMethod === 'saved'}
                         onChange={() => {
-                          setUseNewAddress(false);
-                          if (shippingDetails.lat && shippingDetails.lng) {
-                            setShippingFee(calculateShippingFee(shippingDetails.lat, shippingDetails.lng));
+                          setDeliveryMethod('saved');
+                          if (savedCoords?.lat && savedCoords?.lng) {
+                            setShippingFee(calculateShippingFee(savedCoords.lat, savedCoords.lng));
                           }
                         }}
                         className="shipping-radio-input"
@@ -334,20 +379,25 @@ export default function CartPage() {
                     </label>
                   )}
 
-                  {savedAddress && (
-                    <label className="shipping-radio-label-center">
-                      <input 
-                        type="radio" 
-                        name="address_choice" 
-                        checked={useNewAddress}
-                        onChange={() => setUseNewAddress(true)}
-                        className="shipping-radio-input-center"
-                      />
-                      <span className="shipping-radio-text-main">Ship to a different address</span>
-                    </label>
-                  )}
+                  <label className={savedAddress ? "shipping-radio-label-center" : "shipping-radio-label"}>
+                    <input 
+                      type="radio" 
+                      name="delivery_method" 
+                      checked={deliveryMethod === 'new'}
+                      onChange={() => {
+                        setDeliveryMethod('new');
+                        if (shippingDetails.lat && shippingDetails.lng) {
+                          setShippingFee(calculateShippingFee(shippingDetails.lat, shippingDetails.lng));
+                        } else {
+                          setShippingFee(300);
+                        }
+                      }}
+                      className={savedAddress ? "shipping-radio-input-center" : "shipping-radio-input"}
+                    />
+                    <span className="shipping-radio-text-main">Ship to a different address</span>
+                  </label>
 
-                  {useNewAddress && (
+                  {deliveryMethod === 'new' && (
                     <div className={`shipping-form-container ${savedAddress ? 'shipping-form-container-mt' : ''}`}>
                       <div className="shipping-form-row">
                         <div className="shipping-form-group">
@@ -406,6 +456,24 @@ export default function CartPage() {
                       </div>
                     </div>
                   )}
+
+                  <label className="shipping-radio-label">
+                    <input 
+                      type="radio" 
+                      name="delivery_method" 
+                      checked={deliveryMethod === 'pickup'}
+                      onChange={() => {
+                        setDeliveryMethod('pickup');
+                        setShippingFee(0);
+                      }}
+                      className="shipping-radio-input"
+                    />
+                    <div>
+                      <span className="shipping-radio-text-main">Pick up in store (Free)</span>
+                      <span className="shipping-radio-text-sub">Tom Mboya Street, platinum plaza, 3rd floor shop 305, CBD Nairobi</span>
+                    </div>
+                  </label>
+
                 </div>
               )}
             </div>
@@ -415,14 +483,34 @@ export default function CartPage() {
               <span>KSh {total}</span>
             </div>
 
-            {process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true' ? (
+            {!isAuthenticated ? (
+              <button 
+                className="checkout-btn" 
+                onClick={() => {
+                  showAlert("Please sign in or create an account to complete your purchase.", { title: "Authentication Required" });
+                  router.push('/account');
+                }}
+              >
+                SIGN IN TO CHECKOUT
+              </button>
+              ) : isFreeOrder ? (
+                <button className="checkout-btn" onClick={() => executeCheckout(false, true)}>
+                  PLACE ORDER
+                </button>
+            ) : process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true' ? (
               <button className="checkout-btn" onClick={() => executeCheckout(true)}>
                 PROCEED TO CHECKOUT (SANDBOX)
               </button>
             ) : (
               <PaystackButton 
-                config={config} onSuccess={() => executeCheckout(false)} onClose={() => alert("Payment cancelled.")} 
-                onValidation={validateCheckout} className="checkout-btn" text="PROCEED TO CHECKOUT"
+                config={config} 
+                onSuccess={() => executeCheckout(false)} 
+                onClose={() => {
+                  showAlert("Payment was cancelled or interrupted. You can retry your payment at any time.", { title: "Payment Cancelled" });
+                }}
+                onValidation={validateCheckout} 
+                className="checkout-btn" 
+                text="PROCEED TO CHECKOUT"
               />
             )}
             

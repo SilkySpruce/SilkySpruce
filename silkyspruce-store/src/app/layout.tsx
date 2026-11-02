@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import MaintenanceMode from "@/components/MaintenanceMode";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,6 +39,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { AlertProvider } from "@/components/CustomAlert";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,14 +54,16 @@ export default function RootLayout({
         {isMaintenance ? (
           <MaintenanceMode />
         ) : (
-          <>
+          <AlertProvider>
             <Navbar />
             <main className="flex-grow">{children}</main>
             <Footer />
-          </>
+          </AlertProvider>
         )}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
 }
+

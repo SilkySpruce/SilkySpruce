@@ -41,6 +41,16 @@ export default function PrivacyPolicy() {
             We have put in place appropriate security measures to prevent your personal data from being accidentally lost, used or accessed in an unauthorized way, altered or disclosed. In addition, we limit access to your personal data to those employees, agents, contractors and other third parties who have a business need to know.
           </p>
 
+          <h2 className="text-xl font-semibold text-white mt-4">Google User Data</h2>
+          <p>
+            Our application uses Google OAuth to allow users to sign in securely. When you choose to log in with Google, we request access to your basic profile information (name and profile picture) and email address.
+          </p>
+          <ul className="list-disc pl-5 flex flex-col gap-2">
+            <li><strong>Access and Use:</strong> We access your Google email and name solely to create your Silky Spruce account, authenticate your logins, and communicate order updates.</li>
+            <li><strong>Storage:</strong> This data is stored securely in our Supabase database.</li>
+            <li><strong>Sharing:</strong> We strictly do not share your Google user data with any third-party services, partners, or advertisers.</li>
+          </ul>
+
           <h2 className="text-xl font-semibold text-white mt-4">5. Contact Us</h2>
           <p>
             If you have any questions about this privacy policy or our privacy practices, please contact us at fountaincreations@gmail.com.

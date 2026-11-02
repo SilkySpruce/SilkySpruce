@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { deleteUserAccount } from '@/app/actions/deleteAccount';
 import { useUserStore } from '@/store/userStore';
 import { supabase } from '@/lib/supabase';
+import { useAlert } from '@/components/CustomAlert';
 
 export default function DeleteAccountFlow() {
   const { user, logoutUser } = useUserStore();
@@ -10,7 +11,8 @@ export default function DeleteAccountFlow() {
   const [reason, setReason] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const { showAlert } = useAlert();
+  
   const handleClose = () => {
     setStage(0);
     setReason("");
@@ -27,7 +29,7 @@ export default function DeleteAccountFlow() {
       logoutUser();
       window.location.href = '/';
     } else {
-      alert(result.error);
+      await showAlert(result.error, { title: "Couldn't delete account" });
       setIsDeleting(false);
     }
   };

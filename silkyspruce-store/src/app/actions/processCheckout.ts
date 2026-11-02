@@ -17,6 +17,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 interface CheckoutPayload {
   userId?: string;
   pointsUsed: number;
+  isPickup?: boolean;
   customer: {
     firstName: string;
     lastName: string;
@@ -51,8 +52,8 @@ export async function processCheckout(payload: CheckoutPayload) {
     // -----------------------------------------------------------------
     // 0. SAVE/FETCH USER ADDRESS
     // -----------------------------------------------------------------
-    if (payload.userId) {
-      // If new coordinates were passed, save them to the address book
+    if (payload.userId && !payload.isPickup) {
+      // If new coordinates were passed (and it is NOT a store pickup), save them
       if (payload.customer.latitude && payload.customer.longitude) {
         // Clear old defaults first
         await supabaseAdmin
@@ -93,7 +94,7 @@ export async function processCheckout(payload: CheckoutPayload) {
     
     const { data: stockData, error: stockError } = await supabaseAdmin
       .from('product_variants')
-      .select('id, stock_quantity')
+      .select('id, stock_quantity, price')
       .in('id', variantIds);
 
     if (stockError || !stockData) {
@@ -118,19 +119,42 @@ export async function processCheckout(payload: CheckoutPayload) {
     // -----------------------------------------------------------------
     // 2. SECURE BACKEND PRICING CALCULATION
     // -----------------------------------------------------------------
-    const subtotal = payload.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // The backend dynamically calculates the fee based on the exact coordinates passed.
-    // If coordinates are missing, it safely falls back to the default 300 configured in the utility.
-    const shippingFee = calculateShippingFee(
+    const subtotal = payload.items.reduce((sum, item) => {
+  const dbVariant = stockData.find(v => v.id === item.id);
+  return sum + (Number(dbVariant?.price ?? item.price) * item.quantity);
+}, 0);
+
+// Force shipping to 0 if they select pickup, otherwise calculate dynamically
+const shippingFee = payload.isPickup
+  ? 0
+  : calculateShippingFee(
       payload.customer.latitude || 0,
       payload.customer.longitude || 0
     );
-    
-    const totalAmount = subtotal - payload.pointsUsed + shippingFee;
-    
-    const pointsEarned = Math.floor(totalAmount / 100);
-    const orderNumber = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
+
+// Verify the points the customer wants to spend against their real balance
+let availablePoints = 0;
+if (payload.userId) {
+  const { data: pointsProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('loyalty_points')
+    .eq('id', payload.userId)
+    .maybeSingle();
+  availablePoints = pointsProfile?.loyalty_points || 0;
+}
+
+if (payload.pointsUsed < 0 || payload.pointsUsed > availablePoints) {
+  return { success: false, error: 'You do not have enough loyalty points for this order.' };
+}
+
+// Points can never push the total below zero
+const pointsToUse = Math.min(payload.pointsUsed, subtotal + shippingFee);
+
+const totalAmount = subtotal - pointsToUse + shippingFee;
+const isFreeOrder = totalAmount <= 0; // fully covered by points, no payment needed
+
+const pointsEarned = Math.floor(totalAmount / 100);
+const orderNumber = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
 
     const { data: orderData, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -144,7 +168,7 @@ export async function processCheckout(payload: CheckoutPayload) {
         subtotal: subtotal,
         shipping_fee: shippingFee,
         total_amount: totalAmount,
-        points_used: payload.pointsUsed,
+        points_used: pointsToUse,
         points_earned: pointsEarned,
         status: 'Pending'
       }])
@@ -189,7 +213,7 @@ export async function processCheckout(payload: CheckoutPayload) {
         .maybeSingle();
         
       const currentPoints = profile?.loyalty_points || 0;
-      const newBalance = currentPoints - payload.pointsUsed + pointsEarned;
+      const newBalance = currentPoints - pointsToUse + pointsEarned;
 
       await supabaseAdmin
         .from('profiles')
@@ -207,7 +231,7 @@ export async function processCheckout(payload: CheckoutPayload) {
       shipping: shippingFee
     });
 
-    return { success: true, orderNumber, pointsEarned };
+    return { success: true, orderNumber, pointsEarned, paymentRequired: !isFreeOrder };
 
   } catch (error: any) {
     console.error("Checkout Error:", error);

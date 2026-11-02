@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useUserStore } from '@/store/userStore';
 import { Package, Truck, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
+import { useAlert } from '@/components/CustomAlert';
 
 // Database types for our UI
 interface OrderItem {
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
+  const { showAlert } = useAlert();
   
   // PROPER HYDRATION FIX
   const [isMounted, setIsMounted] = useState(false);
@@ -76,8 +78,10 @@ export default function AdminDashboard() {
         order.id === orderId ? { ...order, status: newStatus } : order
       ));
     } else {
-      alert("Failed to update order status.");
-    }
+      await showAlert("Failed to update order status. Please try again.", {
+      title: "Update Failed",
+    });
+  };
   };
 
   const toggleOrderExpansion = (orderId: string) => {
