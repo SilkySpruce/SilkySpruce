@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { Package, MapPin, Star, Heart, User, LogOut, Plus, Trash2, Edit2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useUserStore } from '@/store/userStore';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useCartStore } from '@/store/cartStore';
 import DeleteAccountFlow from './DeleteAccountFlow';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -22,7 +23,7 @@ interface Address {
 
 function AccountPageContent() {
   const { user, isAuthenticated, loginUser, logoutUser } = useUserStore();
-  const { clearCart } = useCartStore();
+  const { addItem, clearCart } = useCartStore();
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -35,20 +36,26 @@ function AccountPageContent() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [fullName, setFullName] = useState('');
+  const [signUpPhone, setSignUpPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authMessage, setAuthMessage] = useState('');
   const [isMounted, setIsMounted] = useState(false);
 
   // Profile Form State
-  const [phone, setPhone] = useState('');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
   const [orders, setOrders] = useState<any[]>([]);
+  const [reorderLoading, setReorderLoading] = useState<string | null>(null);
 
   // Address Book State
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const autoCompleteRef = useRef<HTMLInputElement>(null);
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
 
-  // New Address Form State
   const [newAddress, setNewAddress] = useState({
     recipientName: '',
     phone: '',
@@ -71,7 +78,7 @@ function AccountPageContent() {
     }
   }, []);
 
-  // Sync tab from URL query params (e.g. /account?tab=orders)
+  // Sync tab from URL query params
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam && ['profile', 'addresses', 'orders', 'loyalty'].includes(tabParam)) {
@@ -79,18 +86,57 @@ function AccountPageContent() {
     }
   }, [searchParams]);
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-    
-    if (error) {
-      setAuthError(error.message);
+  // Sync user details to edit state
+  useEffect(() => {
+    if (user) {
+      setEditFirstName(user.firstName || '');
+      setEditLastName(user.lastName || '');
+      setEditPhone(user.phone || '');
     }
-  };
+  }, [user]);
+
+  // Google Maps Autocomplete for Addresses
+  useEffect(() => {
+    const googleMaps = (window as any).google?.maps;
+    if (!isGoogleLoaded || !showAddressForm || !autoCompleteRef.current || !googleMaps?.places) {
+      return;
+    }
+
+    const autocomplete = new googleMaps.places.Autocomplete(autoCompleteRef.current, {
+      componentRestrictions: { country: ["ke", "ug", "tz"] },
+      fields: ["formatted_address", "name"],
+    });
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      const formattedAddress = place.formatted_address || place.name;
+      const cleanAddress = formattedAddress ? formattedAddress.replace(', Kenya', '').replace(', Uganda', '') : '';
+
+      setNewAddress(prev => ({
+        ...prev,
+        streetAddress: cleanAddress,
+      }));
+    });
+
+    return () => {
+      if (googleMaps) {
+        googleMaps.event.removeListener(listener);
+      }
+    };
+  }, [isGoogleLoaded, showAddressForm]);
+
+  // const handleGoogleLogin = async () => {
+  //   const { error } = await supabase.auth.signInWithOAuth({
+  //     provider: 'google',
+  //     options: {
+  //       redirectTo: `${window.location.origin}/`,
+  //     },
+  //   });
+    
+  //   if (error) {
+  //     setAuthError(error.message);
+  //   }
+  // };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +152,7 @@ function AccountPageContent() {
           options: {
             data: {
               full_name: fullName,
-              phone: ''
+              phone: signUpPhone
             }
           }
         });
@@ -127,7 +173,6 @@ function AccountPageContent() {
         
         if (error) throw error;
 
-        // Save or clear remember-me credentials
         if (rememberMe) {
           localStorage.setItem('silky_remembered_email', email);
           localStorage.setItem('silky_remembered_password', password);
@@ -151,25 +196,34 @@ function AccountPageContent() {
     await supabase.auth.signOut();
   };
 
-  // Profile Handlers
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    const newFullName = `${editFirstName} ${editLastName}`.trim();
+    
     const { error } = await supabase.auth.updateUser({
-      data: { phone: phone }
+      data: { 
+        full_name: newFullName,
+        phone: editPhone 
+      }
     });
     
     if (error) {
-      await showAlert("Failed to update profile: " + error.message, {
-      title: "Update Failed",
-      });
+      await showAlert("Failed to update profile: " + error.message, { title: "Update Failed" });
     } else {
-      await showAlert("Profile updated successfully!", {
-        title: "Update Successful",
-      });
+      // Sync local store
+      if (user) {
+        loginUser({
+          ...user,
+          firstName: editFirstName,
+          lastName: editLastName,
+          phone: editPhone
+        });
+      }
+      setIsEditingProfile(false);
+      await showAlert("Profile updated successfully!", { title: "Update Successful" });
     }
   };
 
-  // Fetch user's order history
   const loadOrders = async (userId: string) => {
     const { data, error } = await supabase
       .from('orders')
@@ -177,14 +231,9 @@ function AccountPageContent() {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (data) {
-      setOrders(data);
-    } else if (error) {
-      console.error("Error loading orders:", error);
-    }
+    if (data) setOrders(data);
   };
 
-  // Address Handlers
   const loadAddresses = async (userId: string) => {
     const { data } = await supabase
       .from('user_addresses')
@@ -223,7 +272,6 @@ function AccountPageContent() {
         loyaltyPoints: profile?.loyalty_points || 0, 
         phone: sessionUser.user_metadata?.phone || '',
       });
-      setPhone(sessionUser.user_metadata?.phone || '');
 
       loadAddresses(sessionUser.id);
       loadOrders(sessionUser.id);
@@ -238,7 +286,6 @@ function AccountPageContent() {
     
     checkSession();
 
-    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         await fetchAndSetUserData(session.user);
@@ -246,7 +293,6 @@ function AccountPageContent() {
         logoutUser();
         setAddresses([]);
         setOrders([]);
-        clearCart();
       }
     });
 
@@ -281,28 +327,89 @@ function AccountPageContent() {
       setShowAddressForm(false);
       setNewAddress({ recipientName: '', phone: '', streetAddress: '', apartment: '', city: '', isDefault: false });
     } else {
-      await showAlert("Error saving address: " + error.message, {
-        title: "Address Not Saved",
-      });
+      await showAlert("Error saving address: " + error.message, { title: "Address Not Saved" });
     }
   };
 
   const handleDeleteAddress = async (id: string) => {
     if (!user) return;
     const { error } = await supabase.from('user_addresses').delete().eq('id', id);
-    if (!error) {
-      loadAddresses(user.id);
-    }
+    if (!error) loadAddresses(user.id);
   };
 
   const handleSetDefault = async (id: string) => {
     if (!user) return;
-    
     await supabase.from('user_addresses').update({ is_default: false }).eq('user_id', user.id);
     const { error } = await supabase.from('user_addresses').update({ is_default: true }).eq('id', id);
+    if (!error) loadAddresses(user.id);
+  };
+
+  const handleBuyAgain = async (order: any) => {
+    if (!order.order_items || order.order_items.length === 0) return;
+    setReorderLoading(order.id);
     
-    if (!error) {
-      loadAddresses(user.id);
+    try {
+      const variantIds = order.order_items.map((item: any) => item.product_id);
+
+      const { data: variants, error } = await supabase
+        .from('product_variants')
+        .select(`
+          id, 
+          stock_quantity, 
+          image_url, 
+          products!inner(id, slug, name, featured_image)
+        `)
+        .in('id', variantIds);
+
+      if (error || !variants) throw new Error("Unable to verify current stock levels.");
+
+      let itemsAddedCount = 0;
+      let stockNotices: string[] = [];
+
+      for (const orderItem of order.order_items) {
+        const variant = variants.find(v => v.id === orderItem.product_id);
+        
+        if (!variant || variant.stock_quantity <= 0) {
+          stockNotices.push(`- ${orderItem.product_name} (${orderItem.size}) is out of stock.`);
+          continue;
+        }
+
+        const quantityToAdd = Math.min(orderItem.quantity, variant.stock_quantity);
+        if (quantityToAdd < orderItem.quantity) {
+          stockNotices.push(`- ${orderItem.product_name} (${orderItem.size}): Only ${quantityToAdd} available.`);
+        }
+
+        // FIX: Extract the product object safely to bypass the strict array inference
+        const product: any = Array.isArray(variant.products) ? variant.products[0] : variant.products;
+
+        addItem({
+          id: variant.id,
+          productId: product?.id,
+          name: orderItem.product_name,
+          slug: product?.slug,
+          size: orderItem.size,
+          price: orderItem.price,
+          quantity: quantityToAdd,
+          image: variant.image_url || product?.featured_image || ''
+        });
+        
+        itemsAddedCount++;
+      }
+
+      if (stockNotices.length > 0) {
+        await showAlert(`Some items were adjusted based on current availability:\n${stockNotices.join('\n')}`, { title: "Stock Notice" });
+      }
+
+      if (itemsAddedCount > 0) {
+        router.push('/cart');
+      } else {
+        await showAlert("All items from this order are currently out of stock.", { title: "Out of Stock" });
+      }
+
+    } catch (err: any) {
+      await showAlert(err.message, { title: "Reorder Failed" });
+    } finally {
+      setReorderLoading(null);
     }
   };
 
@@ -341,17 +448,30 @@ function AccountPageContent() {
             {authMessage && <div className="success-text">{authMessage}</div>}
             
             {authMode === 'signup' && (
-              <div className="form-group">
-                <label>Full Name</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="Jane Doe" 
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  autoComplete="name"
-                />
-              </div>
+              <>
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="Jane Doe" 
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    autoComplete="name"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Phone Number</label>
+                  <input 
+                    type="tel" 
+                    required 
+                    placeholder="+254 700 000 000" 
+                    value={signUpPhone}
+                    onChange={(e) => setSignUpPhone(e.target.value)}
+                    autoComplete="tel"
+                  />
+                </div>
+              </>
             )}
             
             <div className="form-group">
@@ -415,6 +535,12 @@ function AccountPageContent() {
   // -------------------------
   return (
     <div className="dashboard-container">
+      <Script 
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places`} 
+        strategy="afterInteractive" 
+        onLoad={() => setIsGoogleLoaded(true)}
+      />
+
       <div className="dashboard-header">
         <h1 className="dashboard-title">Welcome back, {user?.firstName || 'Friend'}</h1>
       </div>
@@ -445,34 +571,72 @@ function AccountPageContent() {
           {/* PROFILE TAB */}
           {activeTab === 'profile' && (
             <section className="tab-section">
-              <h2 className="tab-title">Profile Information</h2>
+              <div className="tab-header-flex">
+                <h2 className="tab-title mb-0">Profile Information</h2>
+                {!isEditingProfile && (
+                  <button className="add-new-btn" onClick={() => setIsEditingProfile(true)}>
+                    <Edit2 size={16} /> EDIT PROFILE
+                  </button>
+                )}
+              </div>
+              
               <form className="profile-form" onSubmit={handleUpdateProfile}>
                 <div className="form-row">
                   <div className="form-group">
                     <label>First Name</label>
-                    <input type="text" defaultValue={user?.firstName} disabled className="disabled-input" />
+                    <input 
+                      type="text" 
+                      value={editFirstName} 
+                      onChange={(e) => setEditFirstName(e.target.value)}
+                      disabled={!isEditingProfile} 
+                      className={!isEditingProfile ? "disabled-input" : ""} 
+                    />
                   </div>
                   <div className="form-group">
                     <label>Last Name</label>
-                    <input type="text" defaultValue={user?.lastName} disabled className="disabled-input" />
+                    <input 
+                      type="text" 
+                      value={editLastName} 
+                      onChange={(e) => setEditLastName(e.target.value)}
+                      disabled={!isEditingProfile} 
+                      className={!isEditingProfile ? "disabled-input" : ""} 
+                    />
                   </div>
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Email Address</label>
-                    <input type="email" defaultValue={user?.email} disabled className="disabled-input" />
+                    <label>Email Address <span className="lowercase text-gray-500">(Cannot be changed)</span></label>
+                    <input 
+                      type="email" 
+                      defaultValue={user?.email} 
+                      disabled 
+                      className="disabled-input" 
+                    />
                   </div>
                   <div className="form-group">
                     <label>Phone Number</label>
                     <input 
                       type="tel" 
                       placeholder="+254 700 000 000" 
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      disabled={!isEditingProfile}
+                      className={!isEditingProfile ? "disabled-input" : ""}
                     />
                   </div>
                 </div>
-                <button type="submit" className="save-btn">SAVE CHANGES</button>
+                
+                {isEditingProfile && (
+                  <div className="form-actions">
+                    <button type="submit" className="save-btn">SAVE CHANGES</button>
+                    <button type="button" className="cancel-btn" onClick={() => {
+                      setIsEditingProfile(false);
+                      setEditFirstName(user?.firstName || '');
+                      setEditLastName(user?.lastName || '');
+                      setEditPhone(user?.phone || '');
+                    }}>CANCEL</button>
+                  </div>
+                )}
               </form>
               <DeleteAccountFlow />
             </section>
@@ -514,16 +678,21 @@ function AccountPageContent() {
                         />
                       </div>
                     </div>
+                    
                     <div className="form-group">
-                      <label>Street Address</label>
-                      <input 
-                        type="text" 
-                        required 
-                        placeholder="e.g. 123 Westlands Road"
-                        value={newAddress.streetAddress}
-                        onChange={e => setNewAddress({...newAddress, streetAddress: e.target.value})}
-                      />
+                      <label>Search Location / Street Address</label>
+                      <div className="relative">
+                        <input 
+                          ref={autoCompleteRef}
+                          type="text" 
+                          required
+                          defaultValue={newAddress.streetAddress}
+                          placeholder="Start typing to search..."
+                          className="w-full bg-transparent border border-[#2A2A2A] text-white p-3 pl-12 focus:outline-none focus:border-[#788E7D]"
+                        />
+                      </div>
                     </div>
+
                     <div className="form-row">
                       <div className="form-group">
                         <label>Apartment or Suite (Optional)</label>
@@ -647,7 +816,13 @@ function AccountPageContent() {
                       
                       <div className="order-footer">
                         <p className="order-total">Total: KSh {order.total_amount}</p>
-                        <Link href="/shop" className="reorder-btn">Buy Again</Link>
+                        <button 
+                          onClick={() => handleBuyAgain(order)}
+                          disabled={reorderLoading === order.id}
+                          className="reorder-btn disabled:opacity-50"
+                        >
+                          {reorderLoading === order.id ? 'CHECKING STOCK...' : 'BUY AGAIN'}
+                        </button>
                       </div>
                       
                     </div>
@@ -706,28 +881,6 @@ const AuthStyles = () => (
       text-align: center;
       margin-bottom: 2.5rem;
       font-size: 0.875rem;
-    }
-    .google-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      background-color: #ffffff;
-      color: #000000;
-      border: none;
-      padding: 1rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      width: 100%;
-    }
-    .google-btn:hover {
-      background-color: #f3f4f6;
-    }
-    .google-icon {
-      width: 1.25rem;
-      height: 1.25rem;
     }
     .auth-divider {
       display: flex;
@@ -1292,6 +1445,25 @@ const DashboardStyles = () => (
     .reorder-btn:hover {
       background: #ffffff;
       color: #000000;
+    }
+    .pac-container {
+      background-color: #1A1A1A !important;
+      border: 1px solid #2A2A2A !important;
+      color: white !important;
+      font-family: inherit !important;
+      z-index: 1000 !important;
+    }
+    .pac-item {
+      color: #9ca3af !important;
+      border-top: 1px solid #2A2A2A !important;
+      padding: 10px !important;
+      cursor: pointer;
+    }
+    .pac-item:hover {
+      background-color: #2A2A2A !important;
+    }
+    .pac-item-query {
+      color: white !important;
     }
   `}</style>
 );
