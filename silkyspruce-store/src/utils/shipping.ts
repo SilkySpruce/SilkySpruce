@@ -16,21 +16,23 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 export function calculateShippingFee(customerLat: number, customerLng: number) {
-  if (!customerLat || !customerLng) return 300; // Default fallback fee if location is missing
+  // if (!customerLat || !customerLng) return 300; // Default fallback fee if location is missing
+  if (!customerLat || !customerLng) return 0; // Default fallback fee if location is missing
 
-  const distanceKm = calculateDistance(SHOP_LOCATION.lat, SHOP_LOCATION.lng, customerLat, customerLng);
+  // const distanceKm = calculateDistance(SHOP_LOCATION.lat, SHOP_LOCATION.lng, customerLat, customerLng);
 
-  // Dynamic Tiered Pricing Structure (Adjust rates as needed)
-  const baseFee = 200; // Base delivery fee for the first 3 km
-  const ratePerKm = 50; // KSh 50 for every kilometer beyond 3 km
+  // // Dynamic Tiered Pricing Structure (Adjust rates as needed)
+  // const baseFee = 200; // Base delivery fee for the first 3 km
+  // const ratePerKm = 50; // KSh 50 for every kilometer beyond 3 km
 
-  if (distanceKm <= 3) {
-    return baseFee;
-  }
+  // if (distanceKm <= 3) {
+  //   return baseFee;
+  // }
 
-  const extraKm = distanceKm - 3;
-  const totalFee = baseFee + Math.ceil(extraKm * ratePerKm);
+  // const extraKm = distanceKm - 3;
+  // const totalFee = baseFee + Math.ceil(extraKm * ratePerKm);
 
-  // Maximum cap or standard local delivery limits if necessary
-  return Math.min(totalFee, 1500); 
+  // // Maximum cap or standard local delivery limits if necessary
+  // return Math.min(totalFee, 1500); 
+  return 0; // Free delivery for now, as per your request
 }
