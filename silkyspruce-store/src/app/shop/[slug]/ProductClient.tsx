@@ -19,7 +19,18 @@ export default function ProductClient({ slug }: { slug: string }) {
   const [allImages, setAllImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const addItem = useCartStore((state) => state.addItem);
+  const { addItem, items } = useCartStore();
+  const stock = selectedVariation?.stock_quantity ?? 0; // null counts as out of stock
+  const inCart = items.find((i) => i.id === selectedVariation?.id)?.quantity ?? 0;
+  const available = Math.max(stock - inCart, 0); // what the customer can still add
+
+  const isOutOfStock = stock <= 0;
+  const limitReached = !isOutOfStock && available <= 0; // everything is already in their cart
+
+  // Keep the quantity selector within the available stock
+  useEffect(() => {
+    setQuantity((q) => Math.min(Math.max(q, 1), Math.max(available, 1)));
+  }, [available, selectedVariation?.id]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -91,7 +102,22 @@ export default function ProductClient({ slug }: { slug: string }) {
 
   const handleAddToCart = () => {
     if (!product || !selectedVariation) return;
-    
+
+    if (isOutOfStock) {
+      showAlert("This item is currently out of stock.", { title: "Out of Stock" });
+      return;
+   }
+
+    if (quantity > available) {
+      showAlert(
+        available > 0
+          ? `Only ${available} more available${inCart > 0 ? ` (you already have ${inCart} in your cart)` : ""}.`
+          : `You already have all ${stock} available in your cart.`,
+        { title: "Stock Limit Reached" }
+      );
+      return;
+    }
+
     addItem({
       id: selectedVariation.id,
       productId: product.id,
@@ -100,9 +126,10 @@ export default function ProductClient({ slug }: { slug: string }) {
       price: selectedVariation.price,
       quantity: quantity,
       size: selectedVariation.size || 'Standard',
-      image: allImages[currentImageIndex] || product.featured_image || '', 
+      image: allImages[currentImageIndex] || product.featured_image || '',
+      stock: selectedVariation.stock_quantity ?? 0,
     });
-    
+
     showAlert(
       `${quantity}x ${product.name} (${selectedVariation.size || "Standard"}) added to cart!`,
       { title: "Added to Cart", buttonLabel: "Continue Shopping" }
@@ -271,21 +298,27 @@ export default function ProductClient({ slug }: { slug: string }) {
                   >-</button>
                   <span className="px-4 py-3 text-white w-12 text-center">{quantity}</span>
                   <button 
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-4 py-3 text-white hover:bg-[#1A1A1A] transition"
+                  onClick={() => setQuantity((q) => Math.min(q + 1, available))}
+                  disabled={quantity >= available}
+                  className="px-4 py-3 text-white hover:bg-[#1A1A1A] transition disabled:opacity-40 disabled:cursor-not-allowed"
                   >+</button>
                 </div>
                 
                 <button 
                   onClick={handleAddToCart}
-                  className="flex-1 min-w-[200px] bg-[#788E7D] hover:bg-[#687C6D] text-white py-3 px-8 font-semibold tracking-wider transition"
+                  disabled={isOutOfStock || limitReached}
+                  className="flex-1 min-w-[200px] bg-[#788E7D] hover:bg-[#687C6D] text-white py-3 px-8 font-semibold tracking-wider transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#788E7D]"
                 >
-                  ADD TO CART
+                  {isOutOfStock ? "OUT OF STOCK" : limitReached ? "MAX IN CART" : "ADD TO CART"}
                 </button>
               </div>
               
               <p className="text-sm text-gray-500">
-                {selectedVariation.stock_quantity > 0 ? `${selectedVariation.stock_quantity} in stock` : 'Out of stock'}
+                {isOutOfStock
+                  ? "Out of stock"
+                  : limitReached
+                  ? `All ${stock} available are in your cart`
+                  : `${stock} in stock${inCart > 0 ? ` (${inCart} in your cart)` : ""}`}
               </p>
             </>
           ) : (
