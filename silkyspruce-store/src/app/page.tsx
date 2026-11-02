@@ -116,11 +116,11 @@ export default function Home() {
           </Link>
         </div>
 
-        {loading ? (
+       {loading ? (
           <div className="loading-state">Loading our collection...</div>
         ) : (
           <div className="product-grid">
-            {filteredProducts.slice(0, 8).map((product) => (
+            {filteredProducts.slice(0, 8).map((product, index) => (
               <Link href={`/shop/${product.slug}`} key={product.id} className="product-card">
                 <div className="product-image-wrapper">
                   {product.featured_image && (
@@ -128,6 +128,8 @@ export default function Home() {
                       src={product.featured_image} 
                       alt={product.name} 
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 33vw, 25vw"
+                      priority={index < 4}
                       className="product-image-card"
                     />
                   )}
@@ -185,9 +187,12 @@ export default function Home() {
       <style>{`
         .page-container {
           width: 100%;
+          max-width: 100vw;
+          overflow-x: hidden;
           display: flex;
           flex-direction: column;
           align-items: center;
+          box-sizing: border-box;
         }
 
         /* Hero Section */
@@ -199,6 +204,7 @@ export default function Home() {
           align-items: center;
           justify-content: center;
           border-bottom: 1px solid #2A2A2A;
+          overflow: hidden;
         }
         .hero-background {
           position: absolute;
@@ -272,6 +278,7 @@ export default function Home() {
           justify-content: center;
           gap: 1.5rem;
           border-bottom: 1px solid #2A2A2A;
+          box-sizing: border-box;
         }
         @media (min-width: 768px) {
           .trust-badges {
@@ -298,6 +305,7 @@ export default function Home() {
           max-width: 80rem;
           margin: 0 auto;
           padding: 4rem 1.5rem;
+          box-sizing: border-box;
         }
         
         /* Mobile-friendly Horizontal Filter Scroll */
@@ -394,14 +402,16 @@ export default function Home() {
         }
         .product-grid {
           display: grid;
-          /* 1 column on mobile */
           grid-template-columns: 1fr; 
-          gap: 2.5rem;
+          gap: 2.5rem; 
         }
         .product-card {
           cursor: pointer;
           text-decoration: none;
           color: inherit;
+          width: 100%;
+          max-width: 22rem;
+          margin: 0 auto;  
         }
         .product-image-wrapper {
           position: relative;
@@ -438,6 +448,7 @@ export default function Home() {
           max-width: 80rem;
           margin: 0 auto;
           padding: 4rem 1.5rem;
+          box-sizing: border-box;
         }
         .how-to-divider {
           display: flex;
@@ -551,6 +562,10 @@ export default function Home() {
           .product-grid { 
             grid-template-columns: repeat(3, 1fr); 
             gap: 2rem;
+          }
+          .product-card { 
+            max-width: none;
+            margin: 0; 
           }
           .how-to-grid { grid-template-columns: 1fr 1fr; }
           .how-to-image-wrapper { aspect-ratio: 4 / 3; }

@@ -170,8 +170,7 @@ export default function ShopPage() {
         /* Sidebar Filters */
         .shop-sidebar {
           width: 100%;
-          position: sticky;
-          top: 6rem;
+          position: relative;
         }
         @media (min-width: 1024px) {
           .shop-sidebar {
@@ -180,6 +179,8 @@ export default function ShopPage() {
             border-right: 1px solid #2A2A2A;
             padding-right: 2rem;
             min-height: 50vh;
+            position: sticky;
+            top: 6rem;
           }
         }
         .sidebar-title {
@@ -189,54 +190,86 @@ export default function ShopPage() {
           color: #6b7280;
           margin-bottom: 1.5rem;
           font-weight: 600;
+          display: none;
         }
+        @media (min-width: 1024px) {
+          .sidebar-title {
+            display: block;
+          }
+        }
+
+        /* Mobile vs Desktop List Styling */
         .sidebar-list {
           list-style: none;
           padding: 0;
           margin: 0;
           display: flex;
-          flex-wrap: wrap;
-          gap: 1rem;
+          gap: 0.75rem;
+          overflow-x: auto;
+          flex-wrap: nowrap;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          padding-bottom: 0.5rem;
         }
+        .sidebar-list::-webkit-scrollbar {
+          display: none;
+        }
+
         @media (min-width: 1024px) {
           .sidebar-list {
             flex-direction: column;
             gap: 0;
+            overflow-x: visible;
+            flex-wrap: wrap;
+            padding-bottom: 0;
           }
         }
+
         .sidebar-button {
           background: transparent;
-          border: none;
+          border: 1px solid #2A2A2A;
           color: #9ca3af;
           cursor: pointer;
-          font-size: 1rem;
+          font-size: 0.875rem;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          width: 100%;
-          padding: 0.75rem 0;
-          transition: color 0.2s ease;
-          text-align: left;
+          justify-content: center;
+          padding: 0.5rem 1.25rem;
+          transition: all 0.2s ease;
+          flex-shrink: 0;
+          white-space: nowrap;
         }
-        @media (max-width: 1023px) {
+
+        @media (min-width: 1024px) {
           .sidebar-button {
-            border: 1px solid #2A2A2A;
-            padding: 0.5rem 1rem;
+            border: none;
+            padding: 0.75rem 0;
+            font-size: 1rem;
+            justify-content: space-between;
+            width: 100%;
+            text-align: left;
+            white-space: normal;
           }
         }
+
         .sidebar-button:hover {
           color: #ffffff;
         }
+
         .sidebar-button-active {
           color: #ffffff;
           font-weight: 600;
+          border-color: #788E7D;
+          background-color: #788E7D;
         }
-        @media (max-width: 1023px) {
+
+        @media (min-width: 1024px) {
           .sidebar-button-active {
-            border-color: #788E7D;
-            background-color: #788E7D;
+            background-color: transparent;
+            color: #ffffff;
           }
         }
+
         .sidebar-active-dot {
           width: 6px;
           height: 6px;
@@ -253,6 +286,7 @@ export default function ShopPage() {
         /* Main Grid Area */
         .shop-main {
           flex-grow: 1;
+          width: 100%;
         }
         .shop-toolbar {
           display: flex;
@@ -292,7 +326,6 @@ export default function ShopPage() {
           text-decoration: none;
           color: inherit;
           display: block;
-          group;
         }
         .product-image-wrapper {
           position: relative;

@@ -41,7 +41,7 @@ export default function ContactUsPage() {
         <div className="contact-info">
           <div className="info-block">
             <h3 className="info-heading">Store</h3>
-            <p className="info-text">Nairobi, Kenya</p>
+            <p className="info-text">Tom Mboya Street, Platinum Plaza, 3rd floor shop 305, CBD, Nairobi, Kenya</p>
           </div>
           <div className="info-block">
             <h3 className="info-heading">Reach Out</h3>
