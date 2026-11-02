@@ -127,6 +127,7 @@ export default function CartPage() {
   const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
   const pointsApplied = usePoints ? maxPoints : 0;
   const total = subtotal - pointsApplied + (items.length > 0 ? shippingFee : 0);
+  const isFreeOrder = total <= 0; // fully covered by loyalty points, no payment needed
 
   const getFinalAddress = () => {
     if (deliveryMethod === 'pickup') return "Pickup at: Tom Mboya Street, platinum plaza, 3rd floor shop 305, CBD Nairobi";
@@ -165,7 +166,7 @@ export default function CartPage() {
     return true;
   };
 
-  const executeCheckout = async (isSandbox = false) => {
+  const executeCheckout = async (isSandbox = false, isFree = false) => {
     if (!(await validateCheckout())) return;
 
     if (isSandbox) {
@@ -197,9 +198,14 @@ export default function CartPage() {
       }))
     };
 
-    showAlert(isSandbox ? "Processing sandbox order..." : "Payment successful. Saving your order.", {
-      title: isSandbox ? "Sandbox Order" : "Order Placed",
-    });
+    showAlert(
+      isFree
+        ? "Placing your order..."
+        : isSandbox
+        ? "Processing sandbox order..."
+        : "Payment successful. Saving your order.",
+      { title: isFree ? "Placing Order" : isSandbox ? "Sandbox Order" : "Order Placed" }
+    );
 
     try {
       const result = await processCheckout(checkoutPayload);
@@ -280,7 +286,10 @@ export default function CartPage() {
                     <div className="qty-controls mobile-qty">
                       <button onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
                       <span>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
+                      <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                        disabled={item.stock !== undefined && item.quantity >= item.stock}
+                      ><Plus size={14} /></button>
                     </div>
                   </div>
                 </div>
@@ -484,6 +493,10 @@ export default function CartPage() {
               >
                 SIGN IN TO CHECKOUT
               </button>
+              ) : isFreeOrder ? (
+                <button className="checkout-btn" onClick={() => executeCheckout(false, true)}>
+                  PLACE ORDER
+                </button>
             ) : process.env.NEXT_PUBLIC_SIMULATE_PAYMENTS === 'true' ? (
               <button className="checkout-btn" onClick={() => executeCheckout(true)}>
                 PROCEED TO CHECKOUT (SANDBOX)
