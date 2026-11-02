@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 import { calculateShippingFee } from '@/utils/shipping';
+import { useAlert } from '@/components/CustomAlert';
 
 const PaystackButton = dynamic(() => import('@/components/PaystackButton'), { ssr: false });
 
@@ -29,6 +30,7 @@ export default function CartPage() {
   const [shippingFee, setShippingFee] = useState(300); // Default fallback fee
   const autoCompleteRef = useRef<HTMLInputElement>(null);
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+  const { showAlert } = useAlert();
 
   const [shippingDetails, setShippingDetails] = useState({
     country: "Kenya",
@@ -138,23 +140,29 @@ export default function CartPage() {
 
   const validateCheckout = () => {
     if (!isAuthenticated || !user) {
-      alert("Please sign in or create an account to proceed to checkout.");
+      showAlert("Please sign in or create an account to complete your purchase.", {
+        title: "Authentication Required",
+      });
       router.push('/account');
       return false;
     }
     if (items.length === 0) {
-      alert("Your cart is empty!");
+      showAlert("Your cart is empty!", {
+        title: "Empty Cart",
+      });
       return false;
     }
     if (useNewAddress && (!shippingDetails.lat || !shippingDetails.lng)) {
-      alert("Please select a valid address from the dropdown suggestions so we can calculate delivery.");
+       showAlert("Please select a valid address from the dropdown suggestions so we can calculate delivery.", {
+        title: "Invalid Address",
+      });
       return false;
     }
     return true;
   };
 
   const executeCheckout = async (isSandbox = false) => {
-    if (!validateCheckout()) return;
+    if (!(await validateCheckout())) return;
 
     if (isSandbox) {
       const confirmed = window.confirm("SANDBOX MODE: Click OK to simulate a successful payment.");
@@ -183,12 +191,18 @@ export default function CartPage() {
         price: item.price
       }))
     };
-    
-    try {
-      const result = await processCheckout(checkoutPayload);
 
-      if (result.success) {
-        alert(`Order ${result.orderNumber} placed successfully! You earned ${result.pointsEarned || 0} loyalty points.`);
+    showAlert(isSandbox ? "Processing sandbox order..." : "Payment successful. Saving your order.", {
+      title: isSandbox ? "Sandbox Order" : "Order Placed",
+    });
+
+    try{
+        const result = await processCheckout(checkoutPayload);
+
+        if (result.success) {
+          await showAlert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`, {
+            title: "Order Placed",
+          });
         
         if (user) {
           useUserStore.setState({ 
@@ -202,11 +216,15 @@ export default function CartPage() {
         // 2. Redirect to Account Page -> Order History tab
         router.push('/account?tab=orders');
       } else {
-        alert(`Payment / Order Processing Failed: ${result.error}\n\nPlease verify your details and try again.`);
+        showAlert(`Payment / Order Processing Failed: ${result.error}\n\nPlease verify your details and try again.`, {
+          title: "Order Failed",
+        });
       }
     } catch (err: any) {
       console.error("Checkout execution error:", err);
-      alert(`An error occurred while placing your order: ${err.message || 'Please try again.'}`);
+      showAlert(`An error occurred while placing your order: ${err.message || 'Please try again.'}`, {
+        title: "Order Error",
+      });
     }
   };
 
@@ -446,7 +464,9 @@ export default function CartPage() {
               <PaystackButton 
                 config={config} 
                 onSuccess={() => executeCheckout(false)} 
-                onClose={() => alert("Payment was cancelled or interrupted. You can retry your payment at any time.")} 
+                onClose={() => {
+                  showAlert("Payment was cancelled or interrupted. You can retry your payment at any time.", { title: "Payment Cancelled" });
+                }}
                 onValidation={validateCheckout} 
                 className="checkout-btn" 
                 text="PROCEED TO CHECKOUT"

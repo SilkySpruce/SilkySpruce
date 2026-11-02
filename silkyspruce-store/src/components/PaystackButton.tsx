@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { useAlert } from './CustomAlert';
 
 interface PaystackConfig {
   reference: string;
@@ -44,11 +45,12 @@ export default function PaystackButton({
     };
   }, []);
 
+  const { showAlert } = useAlert();
   const handlePaystackClick = () => {
     if (!onValidation()) return;
 
     if (!scriptLoaded || !(window as any).PaystackPop) {
-      alert('Paystack SDK failed to load. Please check your connection.');
+      showAlert('Paystack SDK failed to load. Please check your connection.', { title: "Error" });
       return;
     }
 
