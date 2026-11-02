@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { globalRatelimit } from '@/lib/ratelimit';
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   // Extract the IP securely from standard proxy headers
   const ip = request.headers.get('x-forwarded-for') ?? 
              request.headers.get('x-real-ip') ?? 

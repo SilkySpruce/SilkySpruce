@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
-import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin } from 'lucide-react';
+import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin, Store } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { processCheckout } from '../actions/processCheckout';
 import { useUserStore } from '@/store/userStore';
@@ -23,9 +23,11 @@ export default function CartPage() {
 
   const [usePoints, setUsePoints] = useState(false);
   
-  // Address & Geocoding State
+  // Address, Geocoding & Delivery State
+  const [deliveryMethod, setDeliveryMethod] = useState<'saved' | 'new' | 'pickup'>('new');
   const [savedAddress, setSavedAddress] = useState<string | null>(null);
-  const [useNewAddress, setUseNewAddress] = useState(true);
+  const [savedCoords, setSavedCoords] = useState<{lat: number, lng: number} | null>(null);
+  
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [shippingFee, setShippingFee] = useState(300); // Default fallback fee
   const autoCompleteRef = useRef<HTMLInputElement>(null);
@@ -66,7 +68,8 @@ export default function CartPage() {
             lng: data.longitude || null
           });
           setSavedAddress(`${data.street_address || data.address_line_1}, ${data.city}`);
-          setUseNewAddress(false);
+          setSavedCoords({ lat: data.latitude, lng: data.longitude });
+          setDeliveryMethod('saved');
 
           if (data.latitude && data.longitude) {
             setShippingFee(calculateShippingFee(data.latitude, data.longitude));
@@ -83,7 +86,7 @@ export default function CartPage() {
     useEffect(() => {
     // Defensive check to prevent crashes if Google Maps fails to load due to missing/invalid API keys
     const googleMaps = (window as any).google?.maps;
-    if (!isGoogleLoaded || !useNewAddress || !autoCompleteRef.current || !googleMaps?.places) {
+    if (!isGoogleLoaded || deliveryMethod !== 'new' || !autoCompleteRef.current || !googleMaps?.places) {
       return;
     }
 
@@ -118,7 +121,7 @@ export default function CartPage() {
         googleMaps.event.removeListener(listener);
       }
     };
-  }, [isGoogleLoaded, useNewAddress]);  
+  }, [isGoogleLoaded, deliveryMethod]);  
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
@@ -126,7 +129,8 @@ export default function CartPage() {
   const total = subtotal - pointsApplied + (items.length > 0 ? shippingFee : 0);
 
   const getFinalAddress = () => {
-    if (!useNewAddress && savedAddress) return savedAddress;
+    if (deliveryMethod === 'pickup') return "Pickup at: Tom Mboya Street, platinum plaza, 3rd floor shop 305, CBD Nairobi";
+    if (deliveryMethod === 'saved' && savedAddress) return savedAddress;
     return `${shippingDetails.street}${shippingDetails.apartment ? `, ${shippingDetails.apartment}` : ''}, ${shippingDetails.city}, ${shippingDetails.country}`;
   };
 
@@ -152,7 +156,7 @@ export default function CartPage() {
       });
       return false;
     }
-    if (useNewAddress && (!shippingDetails.lat || !shippingDetails.lng)) {
+    if (deliveryMethod === 'new' && (!shippingDetails.lat || !shippingDetails.lng)) {
        showAlert("Please select a valid address from the dropdown suggestions so we can calculate delivery.", {
         title: "Invalid Address",
       });
@@ -173,15 +177,16 @@ export default function CartPage() {
     const checkoutPayload = {
       userId: user?.id,
       pointsUsed: pointsApplied, 
+      isPickup: deliveryMethod === 'pickup',
       customer: {
         firstName: user?.firstName || "Guest",
         lastName: user?.lastName || "User",
         email: user?.email || "guest@silkyspruce.co.ke",
         phone: user?.phone || "+254700000000",
         address: finalAddress,
-        latitude: shippingDetails.lat,
-        longitude: shippingDetails.lng,
-        city: shippingDetails.city
+        latitude: deliveryMethod === 'pickup' ? -1.28578 : (deliveryMethod === 'saved' ? savedCoords?.lat : shippingDetails.lat),
+        longitude: deliveryMethod === 'pickup' ? 36.82189 : (deliveryMethod === 'saved' ? savedCoords?.lng : shippingDetails.lng),
+        city: deliveryMethod === 'pickup' ? 'Nairobi' : shippingDetails.city
       },
       items: items.map(item => ({
         id: item.id,
@@ -196,13 +201,13 @@ export default function CartPage() {
       title: isSandbox ? "Sandbox Order" : "Order Placed",
     });
 
-    try{
-        const result = await processCheckout(checkoutPayload);
+    try {
+      const result = await processCheckout(checkoutPayload);
 
-        if (result.success) {
-          await showAlert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`, {
-            title: "Order Placed",
-          });
+      if (result.success) {
+        await showAlert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`, {
+          title: "Order Placed",
+        });
         
         if (user) {
           useUserStore.setState({ 
@@ -348,12 +353,12 @@ export default function CartPage() {
                     <label className="shipping-radio-label">
                       <input 
                         type="radio" 
-                        name="address_choice" 
-                        checked={!useNewAddress}
+                        name="delivery_method" 
+                        checked={deliveryMethod === 'saved'}
                         onChange={() => {
-                          setUseNewAddress(false);
-                          if (shippingDetails.lat && shippingDetails.lng) {
-                            setShippingFee(calculateShippingFee(shippingDetails.lat, shippingDetails.lng));
+                          setDeliveryMethod('saved');
+                          if (savedCoords?.lat && savedCoords?.lng) {
+                            setShippingFee(calculateShippingFee(savedCoords.lat, savedCoords.lng));
                           }
                         }}
                         className="shipping-radio-input"
@@ -365,20 +370,25 @@ export default function CartPage() {
                     </label>
                   )}
 
-                  {savedAddress && (
-                    <label className="shipping-radio-label-center">
-                      <input 
-                        type="radio" 
-                        name="address_choice" 
-                        checked={useNewAddress}
-                        onChange={() => setUseNewAddress(true)}
-                        className="shipping-radio-input-center"
-                      />
-                      <span className="shipping-radio-text-main">Ship to a different address</span>
-                    </label>
-                  )}
+                  <label className={savedAddress ? "shipping-radio-label-center" : "shipping-radio-label"}>
+                    <input 
+                      type="radio" 
+                      name="delivery_method" 
+                      checked={deliveryMethod === 'new'}
+                      onChange={() => {
+                        setDeliveryMethod('new');
+                        if (shippingDetails.lat && shippingDetails.lng) {
+                          setShippingFee(calculateShippingFee(shippingDetails.lat, shippingDetails.lng));
+                        } else {
+                          setShippingFee(300);
+                        }
+                      }}
+                      className={savedAddress ? "shipping-radio-input-center" : "shipping-radio-input"}
+                    />
+                    <span className="shipping-radio-text-main">Ship to a different address</span>
+                  </label>
 
-                  {useNewAddress && (
+                  {deliveryMethod === 'new' && (
                     <div className={`shipping-form-container ${savedAddress ? 'shipping-form-container-mt' : ''}`}>
                       <div className="shipping-form-row">
                         <div className="shipping-form-group">
@@ -437,6 +447,24 @@ export default function CartPage() {
                       </div>
                     </div>
                   )}
+
+                  <label className="shipping-radio-label">
+                    <input 
+                      type="radio" 
+                      name="delivery_method" 
+                      checked={deliveryMethod === 'pickup'}
+                      onChange={() => {
+                        setDeliveryMethod('pickup');
+                        setShippingFee(0);
+                      }}
+                      className="shipping-radio-input"
+                    />
+                    <div>
+                      <span className="shipping-radio-text-main">Pick up in store (Free)</span>
+                      <span className="shipping-radio-text-sub">Tom Mboya Street, platinum plaza, 3rd floor shop 305, CBD Nairobi</span>
+                    </div>
+                  </label>
+
                 </div>
               )}
             </div>
@@ -450,7 +478,7 @@ export default function CartPage() {
               <button 
                 className="checkout-btn" 
                 onClick={() => {
-                  alert("Please sign in or create an account to complete your purchase.");
+                  showAlert("Please sign in or create an account to complete your purchase.", { title: "Authentication Required" });
                   router.push('/account');
                 }}
               >
