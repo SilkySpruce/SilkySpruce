@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Package, MapPin, Star, Heart, User, LogOut, Plus, Trash2, Edit2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useUserStore } from '@/store/userStore';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cartStore';
 import DeleteAccountFlow from './DeleteAccountFlow';
+import { useSearchParams } from 'next/navigation';
+import { useAlert } from '@/components/CustomAlert';
 
 interface Address {
   id: string;
@@ -18,15 +20,19 @@ interface Address {
   isDefault: boolean;
 }
 
-export default function AccountPage() {
+function AccountPageContent() {
   const { user, isAuthenticated, loginUser, logoutUser } = useUserStore();
   const { clearCart } = useCartStore();
+  const searchParams = useSearchParams();
+  
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [activeTab, setActiveTab] = useState('profile');
+  const { showAlert } = useAlert();
 
   // Auth Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -50,6 +56,27 @@ export default function AccountPage() {
     city: '',
     isDefault: false
   });
+
+  // Handle remembered credentials
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('silky_remembered_email');
+    const savedPassword = localStorage.getItem('silky_remembered_password');
+    const savedRemember = localStorage.getItem('silky_remember_me');
+
+    if (savedRemember === 'true' && savedEmail) {
+      setEmail(savedEmail);
+      if (savedPassword) setPassword(savedPassword);
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Sync tab from URL query params (e.g. /account?tab=orders)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['profile', 'addresses', 'orders', 'loyalty'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -97,6 +124,17 @@ export default function AccountPage() {
         });
         
         if (error) throw error;
+
+        // Save or clear remember-me credentials
+        if (rememberMe) {
+          localStorage.setItem('silky_remembered_email', email);
+          localStorage.setItem('silky_remembered_password', password);
+          localStorage.setItem('silky_remember_me', 'true');
+        } else {
+          localStorage.removeItem('silky_remembered_email');
+          localStorage.removeItem('silky_remembered_password');
+          localStorage.removeItem('silky_remember_me');
+        }
       }
     } catch (error: any) {
       setAuthError(error.message);
@@ -117,9 +155,13 @@ export default function AccountPage() {
     });
     
     if (error) {
-      alert("Failed to update profile: " + error.message);
+      await showAlert("Failed to update profile: " + error.message, {
+      title: "Update Failed",
+      });
     } else {
-      alert("Profile updated successfully!");
+      await showAlert("Profile updated successfully!", {
+        title: "Update Successful",
+      });
     }
   };
 
@@ -235,7 +277,9 @@ export default function AccountPage() {
       setShowAddressForm(false);
       setNewAddress({ recipientName: '', phone: '', streetAddress: '', apartment: '', city: '', isDefault: false });
     } else {
-      alert("Error saving address: " + error.message);
+      await showAlert("Error saving address: " + error.message, {
+        title: "Address Not Saved",
+      });
     }
   };
 
@@ -272,7 +316,7 @@ export default function AccountPage() {
             {authMode === 'login' ? 'Sign in to manage your account and orders.' : 'Create an account to join the community.'}
           </p>
 
-          <button type="button" className="google-btn" onClick={handleGoogleLogin}>
+          {/* <button type="button" className="google-btn" onClick={handleGoogleLogin}>
             <svg className="google-icon" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -286,7 +330,7 @@ export default function AccountPage() {
             <div className="divider-line"></div>
             <span>OR</span>
             <div className="divider-line"></div>
-          </div>
+          </div> */}
 
           <form className="auth-form" onSubmit={handleAuthSubmit}>
             {authError && <div className="error-text">{authError}</div>}
@@ -334,7 +378,11 @@ export default function AccountPage() {
             {authMode === 'login' && (
               <div className="auth-helpers">
                 <label className="remember-me">
-                  <input type="checkbox" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
                   <span> Remember me</span>
                 </label>
               </div>
@@ -609,6 +657,14 @@ export default function AccountPage() {
       </div>
       <DashboardStyles />
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<div className="loading-state">Loading...</div>}>
+      <AccountPageContent />
+    </Suspense>
   );
 }
 

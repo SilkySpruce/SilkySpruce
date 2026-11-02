@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAlert } from '@/components/CustomAlert';
 
 export default function ProductClient({ slug }: { slug: string }) {
   const [product, setProduct] = useState<any>(null);
@@ -13,7 +14,7 @@ export default function ProductClient({ slug }: { slug: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
-  
+  const { showAlert } = useAlert();
   // States for the Image Gallery
   const [allImages, setAllImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -102,7 +103,10 @@ export default function ProductClient({ slug }: { slug: string }) {
       image: allImages[currentImageIndex] || product.featured_image || '', 
     });
     
-    alert(`${quantity}x ${product.name} (${selectedVariation.size || 'Standard'}) added to cart!`);
+    showAlert(
+      `${quantity}x ${product.name} (${selectedVariation.size || "Standard"}) added to cart!`,
+      { title: "Added to Cart", buttonLabel: "Continue Shopping" }
+    );
   };
 
   // BULLETPROOF IMAGE SWITCHING
