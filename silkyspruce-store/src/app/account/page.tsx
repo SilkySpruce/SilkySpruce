@@ -264,17 +264,28 @@ function AccountPageContent() {
         .eq('id', sessionUser.id)
         .single();
 
+      const phoneNumber = sessionUser.user_metadata?.phone || '';
+      const fullName = sessionUser.user_metadata?.full_name || '';
+
       loginUser({
         id: sessionUser.id,
         email: sessionUser.email || '',
-        firstName: sessionUser.user_metadata?.full_name?.split(' ')[0] || '',
-        lastName: sessionUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+        firstName: fullName.split(' ')[0] || '',
+        lastName: fullName.split(' ').slice(1).join(' ') || '',
         loyaltyPoints: profile?.loyalty_points || 0, 
-        phone: sessionUser.user_metadata?.phone || '',
+        phone: phoneNumber,
       });
 
       loadAddresses(sessionUser.id);
       loadOrders(sessionUser.id);
+
+      if (!phoneNumber){
+        //Intercept the user if phone number is not set and redirect to profile tab
+        setActiveTab('profile');
+        setIsEditingProfile(true);
+        showAlert("Welcome to Silky Spruce! Please update your profile with a valid phone number to continue.", 
+          { title: "Profile Update Required" });
+      }
     };
 
     const checkSession = async () => {
