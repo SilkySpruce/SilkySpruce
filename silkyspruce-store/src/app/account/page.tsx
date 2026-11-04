@@ -125,18 +125,18 @@ function AccountPageContent() {
     };
   }, [isGoogleLoaded, showAddressForm]);
 
-  // const handleGoogleLogin = async () => {
-  //   const { error } = await supabase.auth.signInWithOAuth({
-  //     provider: 'google',
-  //     options: {
-  //       redirectTo: `${window.location.origin}/`,
-  //     },
-  //   });
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
     
-  //   if (error) {
-  //     setAuthError(error.message);
-  //   }
-  // };
+    if (error) {
+      setAuthError(error.message);
+    }
+  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -427,7 +427,7 @@ function AccountPageContent() {
             {authMode === 'login' ? 'Sign in to manage your account and orders.' : 'Create an account to join the community.'}
           </p>
 
-          {/* <button type="button" className="google-btn" onClick={handleGoogleLogin}>
+          <button type="button" className="google-btn" onClick={handleGoogleLogin}>
             <svg className="google-icon" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -441,7 +441,7 @@ function AccountPageContent() {
             <div className="divider-line"></div>
             <span>OR</span>
             <div className="divider-line"></div>
-          </div> */}
+          </div>
 
           <form className="auth-form" onSubmit={handleAuthSubmit}>
             {authError && <div className="error-text">{authError}</div>}
@@ -881,6 +881,30 @@ const AuthStyles = () => (
       text-align: center;
       margin-bottom: 2.5rem;
       font-size: 0.875rem;
+    }
+
+    .google-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      padding: 0.875rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .google-btn:hover {
+      background: #e5e7eb;
+    }
+    .google-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      flex-shrink: 0;
     }
     .auth-divider {
       display: flex;
