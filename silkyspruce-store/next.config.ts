@@ -11,6 +11,30 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/collections',
+        destination: '/shop',
+        permanent: true,
+      },
+      {
+        source: '/collections/:slug*',
+        destination: '/shop',
+        permanent: true,
+      },
+      {
+        source: '/products/:slug*',
+        destination: '/shop/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/api/event/collect',
+        destination: '/',
+        permanent: true,
+      }
+    ];
+  },
 };
 
 export default nextConfig;

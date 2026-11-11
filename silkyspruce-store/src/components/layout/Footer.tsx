@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { subscribeToNewsletter } from '@/app/actions/subscribe';
 
 export default function Footer() {
@@ -82,11 +83,26 @@ export default function Footer() {
         </div>
       </div>
 
+      <div className="footer-bottom">
+        <p className="copyright">
+          © {new Date().getFullYear()} Silky Spruce. All rights reserved.
+        </p>
+        <div className="legal-links">
+          <Link href="/privacy" className="legal-link">
+            Privacy Policy
+          </Link>
+          <span className="legal-divider">|</span>
+          <Link href="/terms" className="legal-link">
+            Terms of Service
+          </Link>
+        </div>
+      </div>
+
       <style>{`
         .footer-container {
           width: 100%;
           background-color: #111111;
-          padding: 6rem 1rem;
+          padding: 6rem 1rem 2rem;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -134,7 +150,7 @@ export default function Footer() {
         }
 
         .form-wrapper {
-          min-height: 4rem; /* Prevents layout shift when success message appears */
+          min-height: 4rem;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -245,6 +261,49 @@ export default function Footer() {
         .whatsapp-btn:hover {
           background-color: #25D366;
           color: #111111;
+        }
+
+        .footer-bottom {
+          width: 100%;
+          max-width: 60rem;
+          margin-top: 6rem;
+          padding-top: 2rem;
+          border-top: 1px solid #2A2A2A;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          font-size: 0.75rem;
+          color: #6b7280;
+        }
+        @media (min-width: 768px) {
+          .footer-bottom {
+            flex-direction: row;
+            justify-content: space-between;
+          }
+        }
+
+        .copyright {
+          margin: 0;
+        }
+
+        .legal-links {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .legal-link {
+          color: #6b7280;
+          text-decoration: none;
+          transition: color 0.2s ease;
+        }
+        .legal-link:hover {
+          color: #ffffff;
+        }
+
+        .legal-divider {
+          color: #2A2A2A;
         }
       `}</style>
     </footer>
