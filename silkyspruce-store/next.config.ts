@@ -19,12 +19,12 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/collections/:slug*',
+        source: '/collections/:slug([^.])*',
         destination: '/shop',
         permanent: true,
       },
       {
-        source: '/products/:slug*',
+        source: '/products/:slug([^.])*',
         destination: '/shop/:slug*',
         permanent: true,
       },
