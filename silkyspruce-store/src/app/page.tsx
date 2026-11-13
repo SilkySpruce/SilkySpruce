@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useUserStore } from '@/store/userStore';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -30,6 +31,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [activeFilter, setActiveFilter] = useState("All Products");
   const [loading, setLoading] = useState(true);
+  const { loginUser } = useUserStore();
 
   useEffect(() => {
     async function loadProducts() {
@@ -43,6 +45,48 @@ export default function Home() {
     }
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    const fetchAndSetUserData = async (sessionUser: any) => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('loyalty_points')
+        .eq('id', sessionUser.id)
+        .single();
+
+      const phoneNumber = sessionUser.user_metadata?.phone || '';
+      const fullName = sessionUser.user_metadata?.full_name || '';
+
+      loginUser({
+        id: sessionUser.id,
+        email: sessionUser.email || '',
+        firstName: fullName.split(' ')[0] || '',
+        lastName: fullName.split(' ').slice(1).join(' ') || '',
+        loyaltyPoints: profile?.loyalty_points || 0, 
+        phone: phoneNumber,
+      });
+    };
+
+    // Check if they already have an active session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await fetchAndSetUserData(session.user);
+      }
+    };
+    checkSession();
+
+    // Listen for the link / email confirmation token in the URL
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await fetchAndSetUserData(session.user);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [loginUser]);
 
   // Dynamic filtering using the exact database categories
   const filteredProducts = products.filter(p => {
@@ -70,8 +114,8 @@ export default function Home() {
         </div>
         
         <div className="hero-content">
-          <p className="hero-subtitle">Pure • Plant Based • Handcrafted</p>
-          <h1 className="hero-title">Nature's Touch for Sensitive Skin</h1>
+          <p className="hero-subtitle">Pure • Nourishing • Handcrafted</p>
+          <h1 className="hero-title">Pure, Plant-Based Care from Head to Toe</h1>
           <Link href="/how-to-use" className="hero-button">
             HOW TO GUIDES
           </Link>
@@ -199,7 +243,8 @@ export default function Home() {
         .hero-section {
           position: relative;
           width: 100%;
-          height: 70vh;
+          height: 55vh;
+          min-height: 400px;
           display: flex;
           align-items: center;
           justify-content: center;

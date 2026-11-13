@@ -65,6 +65,13 @@ function AccountPageContent() {
     isDefault: false
   });
 
+  // Loyalty Tier Helper
+  const getLoyaltyTier = (points: number) => {
+    if (points >= 1500) return "Evergreen";
+    if (points >= 500) return "Blossom";
+    return "Seedling";
+  };
+
   // Handle remembered credentials
   useEffect(() => {
     const savedEmail = localStorage.getItem('silky_remembered_email');
@@ -390,7 +397,6 @@ function AccountPageContent() {
           stockNotices.push(`- ${orderItem.product_name} (${orderItem.size}): Only ${quantityToAdd} available.`);
         }
 
-        // FIX: Extract the product object safely to bypass the strict array inference
         const product: any = Array.isArray(variant.products) ? variant.products[0] : variant.products;
 
         addItem({
@@ -783,7 +789,7 @@ function AccountPageContent() {
                   <Star size={40} className="text-gold" />
                   <div>
                     <h3 className="points-number">{user?.loyaltyPoints || 0} Points</h3>
-                    <p className="points-tier">Welcome Tier</p>
+                    <p className="points-tier">{getLoyaltyTier(user?.loyaltyPoints || 0)} Tier</p>
                   </div>
                 </div>
               </div>
