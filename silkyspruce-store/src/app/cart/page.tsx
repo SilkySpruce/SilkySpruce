@@ -4,9 +4,10 @@ import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
-import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin, Store } from 'lucide-react';
+import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin, Tag, Check, X } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { processCheckout } from '../actions/processCheckout';
+import { validateCoupon, ValidatedCoupon } from '../actions/validateCoupon';
 import { useUserStore } from '@/store/userStore';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -22,6 +23,12 @@ export default function CartPage() {
   const router = useRouter();
 
   const [usePoints, setUsePoints] = useState(false);
+
+  // Coupon State
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<ValidatedCoupon | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   
   // Address, Geocoding & Delivery State
   const [deliveryMethod, setDeliveryMethod] = useState<'saved' | 'new' | 'pickup'>('new');
@@ -124,10 +131,57 @@ export default function CartPage() {
   }, [isGoogleLoaded, deliveryMethod]);  
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const maxPoints = Math.min(user?.loyaltyPoints || 0, subtotal);
+
+  // Re-validate active coupon if cart subtotal changes (e.g. quantity updated)
+  useEffect(() => {
+    if (!appliedCoupon || subtotal === 0) return;
+
+    const revalidate = async () => {
+      const res = await validateCoupon(appliedCoupon.code, subtotal);
+      if (res.valid && res.coupon) {
+        setAppliedCoupon(res.coupon);
+        setCouponError(null);
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(res.error || 'Coupon no longer valid for this cart total.');
+      }
+    };
+
+    revalidate();
+  }, [subtotal]);
+
+  const handleApplyCoupon = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!couponInput.trim() || isValidatingCoupon) return;
+
+    setIsValidatingCoupon(true);
+    setCouponError(null);
+
+    const res = await validateCoupon(couponInput, subtotal);
+
+    if (res.valid && res.coupon) {
+      setAppliedCoupon(res.coupon);
+      setCouponInput(res.coupon.code);
+      setCouponError(null);
+    } else {
+      setAppliedCoupon(null);
+      setCouponError(res.error || 'Invalid coupon code.');
+    }
+
+    setIsValidatingCoupon(false);
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError(null);
+  };
+
+  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const maxPoints = Math.min(user?.loyaltyPoints || 0, Math.max(0, subtotal - couponDiscount));
   const pointsApplied = usePoints ? maxPoints : 0;
-  const total = subtotal - pointsApplied + (items.length > 0 ? shippingFee : 0);
-  const isFreeOrder = total <= 0; // fully covered by loyalty points, no payment needed
+  const total = Math.max(0, subtotal - couponDiscount - pointsApplied + (items.length > 0 ? shippingFee : 0));
+  const isFreeOrder = total <= 0;
 
   const getFinalAddress = () => {
     if (deliveryMethod === 'pickup') return "Pickup at: Tom Mboya Street, platinum plaza, 3rd floor shop 305, CBD Nairobi";
@@ -178,6 +232,7 @@ export default function CartPage() {
     const checkoutPayload = {
       userId: user?.id,
       pointsUsed: pointsApplied, 
+      couponCode: appliedCoupon ? appliedCoupon.code : null,
       isPickup: deliveryMethod === 'pickup',
       customer: {
         firstName: user?.firstName || "Guest",
@@ -221,10 +276,7 @@ export default function CartPage() {
           });
         }
 
-        // 1. Clear cart state in store and localStorage (resets navbar count badge to 0)
         clearCart();
-
-        // 2. Redirect to Account Page -> Order History tab
         router.push('/account?tab=orders');
       } else {
         showAlert(`Payment / Order Processing Failed: ${result.error}\n\nPlease verify your details and try again.`, {
@@ -254,7 +306,6 @@ export default function CartPage() {
 
   return (
     <div className="cart-container">
-      {/* Script loaded with correct async attribute and onReady handler */}
       <Script 
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places`} 
         strategy="afterInteractive" 
@@ -330,6 +381,76 @@ export default function CartPage() {
               <span>KSh {subtotal}</span>
             </div>
 
+            {/* COUPON CODE SECTION */}
+            <div className="coupon-section">
+              <label className="coupon-label">
+                <Tag size={14} /> Discount / Promo Code
+              </label>
+              <form onSubmit={handleApplyCoupon} className="coupon-form">
+                <div className={`coupon-input-wrapper ${appliedCoupon ? 'coupon-valid-border' : couponError ? 'coupon-error-border' : ''}`}>
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => {
+                      setCouponInput(e.target.value.toUpperCase());
+                      if (couponError) setCouponError(null);
+                      if (appliedCoupon) setAppliedCoupon(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleApplyCoupon();
+                      }
+                    }}
+                    placeholder="Enter code & press Enter"
+                    className="coupon-input"
+                    disabled={isValidatingCoupon}
+                  />
+                  {appliedCoupon && (
+                    <span className="coupon-valid-tick" title="Coupon Applied">
+                      <Check size={16} />
+                    </span>
+                  )}
+                  {(couponInput || appliedCoupon) && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="coupon-clear-btn"
+                      title="Remove Code"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                {!appliedCoupon && (
+                  <button
+                    type="submit"
+                    className="coupon-apply-btn"
+                    disabled={!couponInput.trim() || isValidatingCoupon}
+                  >
+                    {isValidatingCoupon ? '...' : 'APPLY'}
+                  </button>
+                )}
+              </form>
+
+              {couponError && (
+                <p className="coupon-error-msg">{couponError}</p>
+              )}
+
+              {appliedCoupon && (
+                <div className="summary-row coupon-discount-row">
+                  <span>
+                    Discount ({appliedCoupon.code} -{' '}
+                    {appliedCoupon.discountType === 'percentage'
+                      ? `${appliedCoupon.discountValue}%`
+                      : `KSh ${appliedCoupon.discountValue}`}
+                    )
+                  </span>
+                  <span className="coupon-discount-amount">- KSh {couponDiscount}</span>
+                </div>
+              )}
+            </div>
+
             {user && (user.loyaltyPoints || 0) > 0 && (
               <div className="summary-row loyalty-summary-row">
                 <label className="loyalty-checkbox-label">
@@ -341,7 +462,7 @@ export default function CartPage() {
                   />
                   <Gift size={16} /> Use Points ({user.loyaltyPoints})
                 </label>
-                {usePoints && <span className="loyalty-discount-text">Subtract KSh {pointsApplied}</span>}
+                {usePoints && <span className="loyalty-discount-text">- KSh {pointsApplied}</span>}
               </div>
             )}
             
@@ -428,7 +549,6 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      {/* GOOGLE MAPS AUTOCOMPLETE */}
                       <div className="search-container">
                         <label className="shipping-label">Search Location / Street Address</label>
                         <div className="search-input-wrapper">
@@ -794,6 +914,111 @@ const CartStyles = () => (
       margin-bottom: 1rem;
       color: #d1d5db;
       font-size: 1rem;
+    }
+    .coupon-section {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid #2A2A2A;
+    }
+    .coupon-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ca3af;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .coupon-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .coupon-input-wrapper {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      border: 1px solid #2A2A2A;
+      background: transparent;
+      padding: 0 0.75rem;
+      transition: border-color 0.2s;
+    }
+    .coupon-input-wrapper:focus-within {
+      border-color: #788E7D;
+    }
+    .coupon-valid-border {
+      border-color: #788E7D !important;
+    }
+    .coupon-error-border {
+      border-color: #ef4444 !important;
+    }
+    .coupon-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      padding: 0.75rem 0;
+      font-size: 0.875rem;
+      letter-spacing: 0.05em;
+      outline: none;
+    }
+    .coupon-input::placeholder {
+      color: #6b7280;
+      letter-spacing: normal;
+    }
+    .coupon-valid-tick {
+      color: #788E7D;
+      display: flex;
+      align-items: center;
+      margin-left: 0.5rem;
+    }
+    .coupon-clear-btn {
+      background: transparent;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 0.25rem;
+      margin-left: 0.25rem;
+      transition: color 0.2s;
+    }
+    .coupon-clear-btn:hover {
+      color: #ffffff;
+    }
+    .coupon-apply-btn {
+      background: #1A1A1A;
+      color: #ffffff;
+      border: 1px solid #2A2A2A;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .coupon-apply-btn:hover:not(:disabled) {
+      border-color: #788E7D;
+      background: #788E7D;
+    }
+    .coupon-apply-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .coupon-error-msg {
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+    .coupon-discount-row {
+      margin-top: 0.75rem;
+      margin-bottom: 0;
+      font-size: 0.875rem;
+      color: #788E7D;
+    }
+    .coupon-discount-amount {
+      font-weight: 600;
     }
     .summary-total {
       display: flex;

@@ -17,6 +17,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 interface CheckoutPayload {
   userId?: string;
   pointsUsed: number;
+  couponCode?: string | null;
   isPickup?: boolean;
   customer: {
     firstName: string;
@@ -117,44 +118,86 @@ export async function processCheckout(payload: CheckoutPayload) {
     }
 
     // -----------------------------------------------------------------
-    // 2. SECURE BACKEND PRICING CALCULATION
+    // 2. SECURE BACKEND PRICING & COUPON CALCULATION
     // -----------------------------------------------------------------
     const subtotal = payload.items.reduce((sum, item) => {
-  const dbVariant = stockData.find(v => v.id === item.id);
-  return sum + (Number(dbVariant?.price ?? item.price) * item.quantity);
-}, 0);
+      const dbVariant = stockData.find(v => v.id === item.id);
+      return sum + (Number(dbVariant?.price ?? item.price) * item.quantity);
+    }, 0);
 
-// Force shipping to 0 if they select pickup, otherwise calculate dynamically
-const shippingFee = payload.isPickup
-  ? 0
-  : calculateShippingFee(
-      payload.customer.latitude || 0,
-      payload.customer.longitude || 0
-    );
+    const shippingFee = payload.isPickup
+      ? 0
+      : calculateShippingFee(
+          payload.customer.latitude || 0,
+          payload.customer.longitude || 0
+        );
 
-// Verify the points the customer wants to spend against their real balance
-let availablePoints = 0;
-if (payload.userId) {
-  const { data: pointsProfile } = await supabaseAdmin
-    .from('profiles')
-    .select('loyalty_points')
-    .eq('id', payload.userId)
-    .maybeSingle();
-  availablePoints = pointsProfile?.loyalty_points || 0;
-}
+    // Re-validate Coupon on the server
+    let couponDiscount = 0;
+    let appliedCouponRecord: any = null;
 
-if (payload.pointsUsed < 0 || payload.pointsUsed > availablePoints) {
-  return { success: false, error: 'You do not have enough loyalty points for this order.' };
-}
+    if (payload.couponCode) {
+      const cleanCode = payload.couponCode.trim().toUpperCase();
+      const { data: coupon } = await supabaseAdmin
+        .from('coupons')
+        .select('*')
+        .eq('code', cleanCode)
+        .maybeSingle();
 
-// Points can never push the total below zero
-const pointsToUse = Math.min(payload.pointsUsed, subtotal + shippingFee);
+      const now = new Date();
+      const isDateValid = 
+        (!coupon?.start_time || new Date(coupon.start_time) <= now) &&
+        (!coupon?.end_time || new Date(coupon.end_time) >= now);
+      const isUsageValid = 
+        coupon?.usage_limit === null || coupon.used_count < coupon.usage_limit;
 
-const totalAmount = subtotal - pointsToUse + shippingFee;
-const isFreeOrder = totalAmount <= 0; // fully covered by points, no payment needed
+      if (
+        !coupon ||
+        !coupon.is_active ||
+        !isDateValid ||
+        !isUsageValid ||
+        subtotal < Number(coupon.min_order_amount || 0)
+      ) {
+        return { success: false, error: 'The applied coupon code is invalid or expired. Please remove it and try again.' };
+      }
 
-const pointsEarned = Math.floor(totalAmount / 100);
-const orderNumber = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
+      if (coupon.discount_type === 'percentage') {
+        couponDiscount = Math.round((subtotal * Number(coupon.discount_value)) / 100);
+        if (coupon.max_discount_amount) {
+          couponDiscount = Math.min(couponDiscount, Number(coupon.max_discount_amount));
+        }
+      } else {
+        couponDiscount = Number(coupon.discount_value);
+      }
+
+      couponDiscount = Math.min(couponDiscount, subtotal);
+      appliedCouponRecord = coupon;
+    }
+
+    // Verify loyalty points against real balance
+    let availablePoints = 0;
+    if (payload.userId) {
+      const { data: pointsProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('loyalty_points')
+        .eq('id', payload.userId)
+        .maybeSingle();
+      availablePoints = pointsProfile?.loyalty_points || 0;
+    }
+
+    if (payload.pointsUsed < 0 || payload.pointsUsed > availablePoints) {
+      return { success: false, error: 'You do not have enough loyalty points for this order.' };
+    }
+
+    // Points apply to whatever remains after coupon discount
+    const remainingAfterCoupon = Math.max(0, subtotal - couponDiscount + shippingFee);
+    const pointsToUse = Math.min(payload.pointsUsed, remainingAfterCoupon);
+
+    const totalAmount = Math.max(0, subtotal - couponDiscount - pointsToUse + shippingFee);
+    const isFreeOrder = totalAmount <= 0;
+
+    const pointsEarned = Math.floor(totalAmount / 100);
+    const orderNumber = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
 
     const { data: orderData, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -167,6 +210,8 @@ const orderNumber = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
         shipping_address: finalAddress, 
         subtotal: subtotal,
         shipping_fee: shippingFee,
+        coupon_code: appliedCouponRecord ? appliedCouponRecord.code : null,
+        discount_amount: couponDiscount,
         total_amount: totalAmount,
         points_used: pointsToUse,
         points_earned: pointsEarned,
@@ -176,6 +221,14 @@ const orderNumber = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
       .single();
 
     if (orderError || !orderData) throw new Error(`Failed to create order: ${orderError?.message}`);
+
+    // Increment coupon usage count if applied
+    if (appliedCouponRecord) {
+      await supabaseAdmin
+        .from('coupons')
+        .update({ used_count: appliedCouponRecord.used_count + 1 })
+        .eq('id', appliedCouponRecord.id);
+    }
 
     // -----------------------------------------------------------------
     // 3. INSERT ITEMS & DEDUCT INVENTORY
