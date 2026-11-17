@@ -28,6 +28,41 @@ const nextConfig: NextConfig = {
         destination: '/shop/:slug',
         permanent: true,
       },
+      {
+        source: '/pages/about-us',
+        destination: '/about-us',
+        permanent: true,
+      },
+      {
+        source: '/pages/contact',
+        destination: '/contact-us',
+        permanent: true,
+      },
+      {
+        source: '/pages/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/blogs/:path*',
+        destination: '/blog',
+        permanent: true,
+      },
+      {
+        source: '/policies/terms-of-service',
+        destination: '/terms',
+        permanent: true,
+      },
+      {
+        source: '/policies/privacy-policy',
+        destination: '/privacy',
+        permanent: true,
+      },
+      {
+        source: '/policies/:path*',
+        destination: '/terms',
+        permanent: true,
+      },
     ];
   },
 };
