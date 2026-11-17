@@ -19,20 +19,15 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/collections/:slug([^.])*',
+        source: '/collections/:path*',
         destination: '/shop',
         permanent: true,
       },
       {
-        source: '/products/:slug([^.])*',
-        destination: '/shop/:slug*',
+        source: '/products/:slug((?!.*\\.(?:png|jpg|jpeg|webp|gif|svg|ico)$).*)',
+        destination: '/shop/:slug',
         permanent: true,
       },
-      {
-        source: '/api/event/collect',
-        destination: '/',
-        permanent: true,
-      }
     ];
   },
 };
