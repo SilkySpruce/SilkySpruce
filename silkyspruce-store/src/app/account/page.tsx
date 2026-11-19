@@ -10,6 +10,7 @@ import { useCartStore } from '@/store/cartStore';
 import DeleteAccountFlow from './DeleteAccountFlow';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAlert } from '@/components/CustomAlert';
+import ReferralCard from '@/components/ReferralCard';
 
 interface Address {
   id: string;
@@ -217,7 +218,6 @@ function AccountPageContent() {
     if (error) {
       await showAlert("Failed to update profile: " + error.message, { title: "Update Failed" });
     } else {
-      // Sync local store
       if (user) {
         loginUser({
           ...user,
@@ -232,7 +232,7 @@ function AccountPageContent() {
   };
 
   const loadOrders = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('orders')
       .select('*, order_items(*)')
       .eq('user_id', userId)
@@ -287,7 +287,6 @@ function AccountPageContent() {
       loadOrders(sessionUser.id);
 
       if (!phoneNumber){
-        //Intercept the user if phone number is not set and redirect to profile tab
         setActiveTab('profile');
         setIsEditingProfile(true);
         showAlert("Welcome to Silky Spruce! Please update your profile with a valid phone number to continue.", 
@@ -577,7 +576,7 @@ function AccountPageContent() {
               <Package size={18} /> <span>Order History</span>
             </button>
             <button className={`nav-item ${activeTab === 'loyalty' ? 'active' : ''}`} onClick={() => setActiveTab('loyalty')}>
-              <Star size={18} /> <span>Loyalty Points</span>
+              <Star size={18} /> <span>Loyalty &amp; Referrals</span>
             </button>
             <button className="nav-item logout-btn" onClick={handleLogout}>
               <LogOut size={18} /> <span>Log Out</span>
@@ -782,24 +781,32 @@ function AccountPageContent() {
             </section>
           )}
 
-          {/* LOYALTY TAB */}
+          {/* LOYALTY & REFERRALS TAB */}
           {activeTab === 'loyalty' && (
-            <section className="tab-section">
-              <h2 className="tab-title">Spruce Loyalty Rewards</h2>
-              <div className="loyalty-card">
-                <div className="loyalty-points">
-                  <div className="loyalty-icon-ring">
-                    <Star size={32} className="text-gold" />
+            <section className="tab-section flex flex-col gap-8">
+              <div>
+                <h2 className="tab-title">Spruce Loyalty Rewards</h2>
+                <div className="loyalty-card">
+                  <div className="loyalty-points">
+                    <div className="loyalty-icon-ring">
+                      <Star size={32} className="text-gold" />
+                    </div>
+                    <div>
+                      <h3 className="points-number">{user?.loyaltyPoints || 0} Points</h3>
+                      <p className="points-tier">{getLoyaltyTier(user?.loyaltyPoints || 0)} Tier</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="points-number">{user?.loyaltyPoints || 0} Points</h3>
-                    <p className="points-tier">{getLoyaltyTier(user?.loyaltyPoints || 0)} Tier</p>
-                  </div>
+                  <p className="loyalty-subtext">
+                    Earn 1 point for every KSh 100 spent. Apply your points directly at checkout for instant savings on any order.
+                  </p>
                 </div>
-                <p className="loyalty-subtext">
-                  Earn 1 point for every KSh 100 spent. Apply your points directly at checkout for instant savings on any order.
-                </p>
               </div>
+
+              {user?.id && (
+                <div className="max-w-2xl">
+                  <ReferralCard userId={user.id} userEmail={user.email || ''} />
+                </div>
+              )}
             </section>
           )}
 
@@ -1403,7 +1410,7 @@ const DashboardStyles = () => (
       border: 1px solid rgba(212, 175, 55, 0.45);
       padding: 2rem;
       background: linear-gradient(135deg, rgba(212, 175, 55, 0.09) 0%, rgba(20, 20, 20, 0.95) 100%);
-      max-width: 32rem;
+      max-width: 42rem;
     }
     .loyalty-points {
       display: flex;

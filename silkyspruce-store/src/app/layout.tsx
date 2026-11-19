@@ -4,42 +4,73 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import MaintenanceMode from "@/components/MaintenanceMode";
+import { AlertProvider } from "@/components/CustomAlert";
 import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import ReferralTracker from "@/components/ReferralTracker";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://silkyspruce.com"),
   title: {
-    template: '%s | Silky Spruce',
-    default: 'Silky Spruce | Handcrafted Plant Based Skincare'
+    template: "%s | Silky Spruce",
+    default: "Silky Spruce | Handcrafted Plant Based Skincare",
   },
-  description: 'Natural, handcrafted plant based skincare, soaps, and wellness rituals made in Kenya.',
-  metadataBase: new URL('https://silkyspruce.com'), 
+  description:
+    "Natural, handcrafted plant based skincare, body oils, hair oils, soaps, and wellness rituals made in Kenya.",
+  keywords: [
+    "Silky Spruce",
+    "natural skincare Kenya",
+    "plant based skincare Nairobi",
+    "organic body oils Kenya",
+    "beard oil Kenya",
+    "shea body butter",
+    "handcrafted soaps Kenya",
+    "hair growth oil Kenya",
+  ],
+  authors: [{ name: "Silky Spruce", url: "https://silkyspruce.com" }],
+  creator: "Silky Spruce",
+  publisher: "Silky Spruce",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
-    title: 'Silky Spruce | Handcrafted Plant Based Skincare',
-    description: 'Natural, handcrafted plant based skincare, soaps, and wellness rituals made in Kenya.',
-    url: 'https://silkyspruce.com',
-    siteName: 'Silky Spruce',
+    title: "Silky Spruce | Handcrafted Plant Based Skincare",
+    description:
+      "Natural, handcrafted plant based skincare, body oils, hair oils, soaps, and wellness rituals made in Kenya.",
+    url: "https://silkyspruce.com",
+    siteName: "Silky Spruce",
     images: [
       {
-        url: '/products/Silky Spruce Logo.png',
+        url: "/products/OpenGraph%20Banner.jpeg",
         width: 1200,
         height: 630,
-        alt: 'Silky Spruce Plant Based Skincare',
+        alt: "Silky Spruce | Handcrafted Plant Based Skincare",
       },
     ],
-    locale: 'en_KE',
-    type: 'website',
+    locale: "en_KE",
+    type: "website",
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'Silky Spruce | Handcrafted Plant Based Skincare',
-    description: 'Natural, handcrafted plant based skincare, soaps, and wellness rituals.',
+    card: "summary_large_image",
+    title: "Silky Spruce | Handcrafted Plant Based Skincare",
+    description:
+      "Natural, handcrafted plant based skincare, body oils, hair oils, soaps, and wellness rituals made in Kenya.",
+    images: ["/products/OpenGraph%20Banner.jpeg"],
   },
 };
-
-import { AlertProvider } from "@/components/CustomAlert";
 
 export default function RootLayout({
   children,
@@ -58,6 +89,9 @@ export default function RootLayout({
             <Navbar />
             <main className="flex-grow">{children}</main>
             <Footer />
+            <Suspense fallback={null}>
+              <ReferralTracker />
+            </Suspense>
           </AlertProvider>
         )}
         <Analytics />
@@ -66,4 +100,3 @@ export default function RootLayout({
     </html>
   );
 }
-

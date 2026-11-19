@@ -8,6 +8,8 @@ import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin,
 import { useCartStore } from '@/store/cartStore';
 import { processCheckout } from '../actions/processCheckout';
 import { validateCoupon, ValidatedCoupon } from '../actions/validateCoupon';
+import { processReferralReward } from '../actions/completeReferral.ts';
+import { getSavedReferralCode, clearSavedReferralCode } from '@/components/ReferralTracker';
 import { useUserStore } from '@/store/userStore';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -36,7 +38,7 @@ export default function CartPage() {
   const [savedCoords, setSavedCoords] = useState<{lat: number, lng: number} | null>(null);
   
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
-  const [shippingFee, setShippingFee] = useState(300); // Default fallback fee
+  const [shippingFee, setShippingFee] = useState(300);
   const autoCompleteRef = useRef<HTMLInputElement>(null);
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const { showAlert } = useAlert();
@@ -89,9 +91,7 @@ export default function CartPage() {
     fetchSavedAddress();
   }, [user]);
 
-  // Safely Initialize Google Maps Autocomplete only when the input field and Google object are ready
-    useEffect(() => {
-    // Defensive check to prevent crashes if Google Maps fails to load due to missing/invalid API keys
+  useEffect(() => {
     const googleMaps = (window as any).google?.maps;
     if (!isGoogleLoaded || deliveryMethod !== 'new' || !autoCompleteRef.current || !googleMaps?.places) {
       return;
@@ -132,7 +132,6 @@ export default function CartPage() {
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  // Re-validate active coupon if cart subtotal changes (e.g. quantity updated)
   useEffect(() => {
     if (!appliedCoupon || subtotal === 0) return;
 
@@ -266,13 +265,36 @@ export default function CartPage() {
       const result = await processCheckout(checkoutPayload);
 
       if (result.success) {
-        await showAlert(`Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`, {
-          title: "Order Placed",
-        });
+        let referralBonus = 0;
+        const savedRefCode = getSavedReferralCode();
+
+        if (savedRefCode && user?.email) {
+          const refResult = await processReferralReward({
+            referralCode: savedRefCode,
+            buyerEmail: user.email,
+            orderReference: result.orderNumber || config.reference,
+          });
+          if (refResult.rewarded) {
+            referralBonus = refResult.points || 100;
+            clearSavedReferralCode();
+          }
+        }
+
+        const totalEarned = (result.pointsEarned || 0) + referralBonus;
+
+        await showAlert(
+          referralBonus > 0
+            ? `Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points + ${referralBonus} referral bonus points.`
+            : `Order ${result.orderNumber} placed! You earned ${result.pointsEarned || 0} loyalty points.`,
+          { title: "Order Placed" }
+        );
         
         if (user) {
           useUserStore.setState({ 
-            user: { ...user, loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + (result.pointsEarned || 0) } 
+            user: {
+              ...user,
+              loyaltyPoints: (user.loyaltyPoints || 0) - pointsApplied + totalEarned,
+            } 
           });
         }
 

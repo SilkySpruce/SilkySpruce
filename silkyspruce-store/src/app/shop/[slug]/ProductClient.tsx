@@ -6,6 +6,7 @@ import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAlert } from '@/components/CustomAlert';
+import ShareButtons from "@/components/ShareButtons";
 
 export default function ProductClient({ slug }: { slug: string }) {
   const [product, setProduct] = useState<any>(null);
@@ -322,6 +323,13 @@ export default function ProductClient({ slug }: { slug: string }) {
                   ? `All ${stock} available are in your cart`
                   : `${stock} in stock${inCart > 0 ? ` (${inCart} in your cart)` : ""}`}
               </p>
+
+              <ShareButtons
+                title={product.name}
+                path={`/shop/${product.slug}`}
+                shareText={`Check out ${product.name} (KSh ${selectedVariation.price.toLocaleString()}) from Silky Spruce:`}
+                label="Share Product"
+              />
             </>
           ) : (
             <p className="text-xl text-red-400">Variations not configured for this product.</p>
