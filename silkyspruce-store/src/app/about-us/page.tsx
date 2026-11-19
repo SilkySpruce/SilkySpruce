@@ -19,7 +19,9 @@ export default function AboutUsPage() {
         
         <div className="hero-content">
           <p className="hero-subtitle">Our Story</p>
-          <h1 className="hero-title">Rooted in Nature</h1>
+          <h1 className="hero-title">
+            Rooted in <span className="gold-italic">Nature</span>
+          </h1>
         </div>
       </section>
 
@@ -30,6 +32,7 @@ export default function AboutUsPage() {
           {/* Left: Text Content */}
           <div className="story-text-content">
             <h2 className="story-heading">The Heart Behind Silky Spruce</h2>
+            <div className="heading-gold-accent"></div>
             
             <p className="story-paragraph font-semibold">
               Our story begins with healing. Yours continues with care.
@@ -60,9 +63,8 @@ export default function AboutUsPage() {
             </p>
 
             <div className="founder-signature">
-              <div className="signature-placeholder">
-                <span className="italic font-serif text-2xl text-gray-400">Caroline Nkinda</span>
-              </div>
+              <span className="signature-name">Caroline Nkinda</span>
+              <span className="signature-role">Founder, Silky Spruce</span>
             </div>
           </div>
 
@@ -93,10 +95,12 @@ export default function AboutUsPage() {
         .about-hero {
           position: relative;
           width: 100%;
-          height: 60vh;
+          height: 55vh;
+          min-height: 380px;
           display: flex;
           align-items: center;
           justify-content: center;
+          border-bottom: 1px solid #2A2A2A;
         }
         .hero-background {
           position: absolute;
@@ -108,7 +112,7 @@ export default function AboutUsPage() {
         }
         .hero-image {
           object-fit: cover;
-          opacity: 0.6;
+          opacity: 0.45;
         }
         .hero-overlay {
           position: absolute;
@@ -116,7 +120,7 @@ export default function AboutUsPage() {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(to bottom, rgba(17,17,17,0.3), #111111);
+          background: linear-gradient(to bottom, rgba(17,17,17,0.35), #111111);
         }
         .hero-content {
           position: relative;
@@ -125,22 +129,27 @@ export default function AboutUsPage() {
           padding: 0 1rem;
         }
         .hero-subtitle {
-          font-size: 0.875rem;
-          letter-spacing: 0.15em;
-          color: #ffffff;
+          font-size: 0.8125rem;
+          letter-spacing: 0.28em;
+          color: #D4AF37;
           margin-bottom: 1rem;
           text-transform: uppercase;
           font-weight: 600;
         }
         .hero-title {
-          font-size: 4rem;
+          font-size: 3.25rem;
           font-weight: 700;
           color: #ffffff;
           letter-spacing: -0.025em;
         }
+        .gold-italic {
+          color: #D4AF37;
+          font-style: italic;
+          font-weight: 600;
+        }
         @media (min-width: 768px) {
           .hero-title {
-            font-size: 5rem;
+            font-size: 4.75rem;
           }
         }
 
@@ -149,7 +158,7 @@ export default function AboutUsPage() {
           width: 100%;
           max-width: 80rem;
           margin: 0 auto;
-          padding: 6rem 2rem;
+          padding: 5rem 2rem 6rem;
         }
         .story-layout {
           display: flex;
@@ -176,17 +185,23 @@ export default function AboutUsPage() {
           }
         }
         .story-heading {
-          font-size: 2.5rem;
+          font-size: 2.35rem;
           font-weight: 700;
           color: #ffffff;
-          margin-bottom: 3rem;
+          margin-bottom: 1.25rem;
           line-height: 1.2;
         }
+        .heading-gold-accent {
+          width: 3.5rem;
+          height: 2px;
+          background-color: #D4AF37;
+          margin-bottom: 2.5rem;
+        }
         .story-paragraph {
-          font-size: 1.125rem;
+          font-size: 1.0625rem;
           color: #d1d5db;
           line-height: 1.8;
-          margin-bottom: 1.75rem;
+          margin-bottom: 1.65rem;
         }
         .font-semibold {
           font-weight: 600;
@@ -198,12 +213,26 @@ export default function AboutUsPage() {
 
         /* Signature Area */
         .founder-signature {
-          margin-top: 1rem;
-        }
-        .signature-placeholder {
-          height: 4rem;
+          margin-top: 1.25rem;
+          padding-top: 1.5rem;
+          border-top: 1px solid #2A2A2A;
           display: flex;
-          align-items: flex-end;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        .signature-name {
+          font-family: Georgia, serif;
+          font-style: italic;
+          font-size: 1.75rem;
+          color: #D4AF37;
+          letter-spacing: 0.01em;
+        }
+        .signature-role {
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+          color: #9ca3af;
+          font-weight: 600;
         }
 
         /* Image Content */
@@ -220,6 +249,8 @@ export default function AboutUsPage() {
           aspect-ratio: 4 / 5;
           width: 100%;
           background-color: #1A1A1A;
+          border: 1px solid rgba(212, 175, 55, 0.35);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
         }
         .story-image {
           object-fit: cover;

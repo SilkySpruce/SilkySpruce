@@ -49,7 +49,10 @@ export default function ShopPage() {
       
       {/* SHOP HEADER */}
       <div className="shop-header">
-        <h1 className="shop-title">The Collection</h1>
+        <p className="shop-kicker">Plant Based Remedies</p>
+        <h1 className="shop-title">
+          The <span className="gold-italic">Collection</span>
+        </h1>
         <p className="shop-description">
           Handcrafted plant based remedies sourced from nature. Filter by category to find your perfect routine.
         </p>
@@ -88,35 +91,39 @@ export default function ShopPage() {
             <div className="loading-state">Loading the collection...</div>
           ) : (
             <div className="shop-grid">
-              {filteredProducts.map((product) => (
-                <Link href={`/shop/${product.slug}`} key={product.id} className="product-card">
-                  <div className="product-image-wrapper">
-                    {product.featured_image ? (
-                      <Image 
-                        src={product.featured_image} 
-                        alt={product.name} 
-                        fill
-                        className="product-image"
-                      />
-                    ) : (
-                      <div className="product-image-placeholder">No Image</div>
-                    )}
-                    
-                    {/* Hover Overlay */}
-                    <div className="product-hover-overlay">
-                      <span className="view-options-btn">View Options</span>
+              {filteredProducts.map((product) => {
+                const sortedPrices = [...(product.product_variants || [])]
+                  .map(v => v.price)
+                  .sort((a, b) => a - b);
+                const displayPrice = sortedPrices[0];
+
+                return (
+                  <Link href={`/shop/${product.slug}`} key={product.id} className="product-card">
+                    <div className="product-image-wrapper">
+                      {product.featured_image ? (
+                        <Image 
+                          src={product.featured_image} 
+                          alt={product.name} 
+                          fill
+                          className="product-image"
+                        />
+                      ) : (
+                        <div className="product-image-placeholder">No Image</div>
+                      )}
                     </div>
-                  </div>
-                  
-                  <div className="product-info">
-                    <h3 className="product-name">{product.name}</h3>
-                    <p className="product-price">
-                      {product.product_variants.length > 1 ? 'From ' : ''}
-                      KSh {product.product_variants[0]?.price}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                    
+                    <div className="product-info">
+                      <h3 className="product-name">{product.name}</h3>
+                      <div className="product-footer">
+                        <p className="product-price">
+                          {displayPrice !== undefined ? `KSh ${displayPrice.toLocaleString()}` : 'View Details'}
+                        </p>
+                        <span className="view-options-btn">VIEW OPTIONS</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </main>
@@ -128,7 +135,7 @@ export default function ShopPage() {
           width: 100%;
           max-width: 90rem;
           margin: 0 auto;
-          padding: 4rem 2rem;
+          padding: 4rem 2rem 6rem;
           display: flex;
           flex-direction: column;
         }
@@ -136,29 +143,48 @@ export default function ShopPage() {
         /* Header */
         .shop-header {
           text-align: center;
-          margin-bottom: 4rem;
+          margin-bottom: 3.5rem;
           border-bottom: 1px solid #2A2A2A;
-          padding-bottom: 4rem;
+          padding-bottom: 3.5rem;
+        }
+        .shop-kicker {
+          font-size: 0.8125rem;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          color: #D4AF37;
+          margin-bottom: 1rem;
+          font-weight: 700;
         }
         .shop-title {
-          font-size: 3rem;
+          font-size: 2.75rem;
           font-weight: 700;
           margin-bottom: 1rem;
           color: #ffffff;
+          letter-spacing: -0.02em;
+        }
+        @media (min-width: 768px) {
+          .shop-title {
+            font-size: 3.75rem;
+          }
+        }
+        .gold-italic {
+          color: #D4AF37;
+          font-style: italic;
+          font-weight: 600;
         }
         .shop-description {
           color: #9ca3af;
-          font-size: 1.125rem;
-          max-width: 32rem;
+          font-size: 1.0625rem;
+          max-width: 34rem;
           margin: 0 auto;
-          line-height: 1.5;
+          line-height: 1.6;
         }
 
         /* Layout Setup */
         .shop-layout {
           display: flex;
           flex-direction: column;
-          gap: 3rem;
+          gap: 2.5rem;
         }
         @media (min-width: 1024px) {
           .shop-layout {
@@ -174,10 +200,10 @@ export default function ShopPage() {
         }
         @media (min-width: 1024px) {
           .shop-sidebar {
-            width: 16rem;
+            width: 14.5rem;
             flex-shrink: 0;
             border-right: 1px solid #2A2A2A;
-            padding-right: 2rem;
+            padding-right: 1.75rem;
             min-height: 50vh;
             position: sticky;
             top: 6rem;
@@ -186,10 +212,10 @@ export default function ShopPage() {
         .sidebar-title {
           font-size: 0.75rem;
           text-transform: uppercase;
-          letter-spacing: 0.1em;
-          color: #6b7280;
-          margin-bottom: 1.5rem;
-          font-weight: 600;
+          letter-spacing: 0.14em;
+          color: #D4AF37;
+          margin-bottom: 1.25rem;
+          font-weight: 700;
           display: none;
         }
         @media (min-width: 1024px) {
@@ -204,7 +230,7 @@ export default function ShopPage() {
           padding: 0;
           margin: 0;
           display: flex;
-          gap: 0.75rem;
+          gap: 0.625rem;
           overflow-x: auto;
           flex-wrap: nowrap;
           -webkit-overflow-scrolling: touch;
@@ -230,11 +256,11 @@ export default function ShopPage() {
           border: 1px solid #2A2A2A;
           color: #9ca3af;
           cursor: pointer;
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 0.5rem 1.25rem;
+          padding: 0.5rem 1rem;
           transition: all 0.2s ease;
           flex-shrink: 0;
           white-space: nowrap;
@@ -243,8 +269,8 @@ export default function ShopPage() {
         @media (min-width: 1024px) {
           .sidebar-button {
             border: none;
-            padding: 0.75rem 0;
-            font-size: 1rem;
+            padding: 0.65rem 0;
+            font-size: 0.9375rem;
             justify-content: space-between;
             width: 100%;
             text-align: left;
@@ -257,23 +283,24 @@ export default function ShopPage() {
         }
 
         .sidebar-button-active {
-          color: #ffffff;
-          font-weight: 600;
-          border-color: #788E7D;
-          background-color: #788E7D;
+          color: #111111;
+          font-weight: 700;
+          border-color: #D4AF37;
+          background-color: #D4AF37;
         }
 
         @media (min-width: 1024px) {
           .sidebar-button-active {
             background-color: transparent;
-            color: #ffffff;
+            color: #D4AF37;
+            font-weight: 600;
           }
         }
 
         .sidebar-active-dot {
           width: 6px;
           height: 6px;
-          background-color: #788E7D;
+          background-color: #D4AF37;
           border-radius: 50%;
           display: none;
         }
@@ -292,52 +319,64 @@ export default function ShopPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 2rem;
-          padding-bottom: 1rem;
+          margin-bottom: 1.75rem;
+          padding-bottom: 0.875rem;
           border-bottom: 1px solid #2A2A2A;
         }
         .results-count {
           color: #9ca3af;
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
         }
         .loading-state {
           height: 20rem;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #6b7280;
-          font-size: 1.125rem;
+          color: #9ca3af;
+          font-size: 1rem;
         }
 
-        /* Grid & Cards */
+        /* Compact Grid & Cards */
         .shop-grid {
           display: grid;
-          grid-template-columns: repeat(1, 1fr);
-          gap: 2rem;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.25rem;
         }
         @media (min-width: 768px) {
-          .shop-grid { grid-template-columns: repeat(2, 1fr); }
+          .shop-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+          }
         }
         @media (min-width: 1280px) {
-          .shop-grid { grid-template-columns: repeat(3, 1fr); }
+          .shop-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
         }
 
         .product-card {
           text-decoration: none;
           color: inherit;
-          display: block;
+          display: flex;
+          flex-direction: column;
+          background-color: #141414;
+          border: 1px solid #2A2A2A;
+          transition: border-color 0.25s ease;
+        }
+        .product-card:hover {
+          border-color: rgba(212, 175, 55, 0.55);
         }
         .product-image-wrapper {
           position: relative;
-          aspect-ratio: 4 / 5;
+          aspect-ratio: 1 / 1;
           width: 100%;
           background-color: #1A1A1A;
           overflow: hidden;
-          margin-bottom: 1.25rem;
+          border-bottom: 1px solid #2A2A2A;
         }
         .product-image {
           object-fit: cover;
-          transition: transform 0.7s ease;
+          transition: transform 0.6s ease;
         }
         .product-card:hover .product-image {
           transform: scale(1.05);
@@ -349,56 +388,60 @@ export default function ShopPage() {
           align-items: center;
           justify-content: center;
           color: #4b5563;
-        }
-        
-        /* Hover Add To Cart / View Options */
-        .product-hover-overlay {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          padding: 1rem;
-          background: linear-gradient(to top, rgba(17,17,17,0.9), transparent);
-          transform: translateY(100%);
-          transition: transform 0.3s ease;
-          display: flex;
-          justify-content: center;
-        }
-        .product-card:hover .product-hover-overlay {
-          transform: translateY(0);
-        }
-        .view-options-btn {
-          background-color: #ffffff;
-          color: #000000;
-          padding: 0.75rem 1.5rem;
-          font-size: 0.875rem;
-          font-weight: 600;
-          width: 100%;
-          text-align: center;
-          transition: background-color 0.2s ease;
-        }
-        .view-options-btn:hover {
-          background-color: #e5e7eb;
+          font-size: 0.8125rem;
         }
 
         .product-info {
+          padding: 1rem;
           display: flex;
           flex-direction: column;
           align-items: center;
           text-align: center;
+          flex-grow: 1;
         }
         .product-name {
-          font-size: 1rem;
+          font-size: 0.9375rem;
           font-weight: 600;
-          margin-bottom: 0.5rem;
+          color: #ffffff;
+          line-height: 1.35;
+          margin-bottom: 0.75rem;
           transition: color 0.2s ease;
         }
         .product-card:hover .product-name {
-          color: #788E7D;
+          color: #D4AF37;
+        }
+
+        .product-footer {
+          margin-top: auto;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.65rem;
         }
         .product-price {
-          color: #9ca3af;
-          font-size: 0.875rem;
+          color: #D4AF37;
+          font-size: 0.9375rem;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+        }
+        .view-options-btn {
+          display: block;
+          width: 100%;
+          background-color: transparent;
+          border: 1px solid #D4AF37;
+          color: #D4AF37;
+          padding: 0.55rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          text-align: center;
+          transition: all 0.2s ease;
+        }
+        .product-card:hover .view-options-btn {
+          background-color: #D4AF37;
+          color: #111111;
         }
       `}</style>
     </div>

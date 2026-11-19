@@ -9,18 +9,14 @@ import React, {
   useState,
 } from "react";
 
-/* -------------------------------------------------------------------------- */
-/*  Theme – matched to the Silky Spruce storefront (near-black + sage green). */
-/*  Tweak these values if any shade looks slightly off.                       */
-/* -------------------------------------------------------------------------- */
 const THEME = {
-  overlay: "rgba(0, 0, 0, 0.65)",
-  surface: "#111111", // same as the page / navbar background
-  border: "#2a2a2a", // thin divider lines like the navbar border
+  overlay: "rgba(0, 0, 0, 0.72)",
+  surface: "#141414",
+  border: "rgba(212, 175, 55, 0.35)",
   title: "#ffffff",
-  text: "#9ca3af", // muted grey used for descriptions
-  accent: "#7d8c7a", // sage green (ADD TO CART button / price)
-  accentHover: "#8c9b89",
+  text: "#9ca3af",
+  accent: "#D4AF37",
+  accentHover: "#E5C158",
   accentText: "#111111",
 };
 
@@ -115,7 +111,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
             justifyContent: "center",
             paddingTop: "12vh",
             background: THEME.overlay,
-            fontFamily: "inherit", // picks up your Inter font from <body>
+            fontFamily: "inherit",
           }}
         >
           <div
@@ -128,9 +124,9 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
               width: "min(460px, calc(100vw - 32px))",
               background: THEME.surface,
               border: `1px solid ${THEME.border}`,
-              borderRadius: 0, // square corners like the site's buttons
+              borderRadius: 0,
               padding: "28px 32px 28px",
-              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.6)",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.7)",
             }}
           >
             <h2
@@ -175,11 +171,11 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
                 background: hovered ? THEME.accentHover : THEME.accent,
                 color: THEME.accentText,
                 fontFamily: "inherit",
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 700,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                outline: `2px solid ${THEME.title}`,
+                outline: `2px solid ${THEME.accent}`,
                 outlineOffset: 3,
                 transition: "background 0.15s ease",
               }}

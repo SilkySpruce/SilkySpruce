@@ -57,7 +57,9 @@ export default function BlogPage() {
       
       <header className="blog-header-creative">
         <p className="blog-kicker">The Silky Spruce Journal</p>
-        <h1 className="blog-title">Nature's Finest</h1>
+        <h1 className="blog-title">
+          Nature&apos;s <span className="gold-italic">Finest</span>
+        </h1>
         <p className="blog-subtitle">
           Insights, rituals, and plant based remedies for your everyday glow.
         </p>
@@ -107,10 +109,10 @@ export default function BlogPage() {
         }
         
         .blog-kicker {
-          font-size: 0.875rem;
-          letter-spacing: 0.2em;
+          font-size: 0.8125rem;
+          letter-spacing: 0.25em;
           text-transform: uppercase;
-          color: #788E7D;
+          color: #D4AF37;
           margin-bottom: 1.25rem;
           font-weight: 600;
         }
@@ -121,6 +123,12 @@ export default function BlogPage() {
           color: #ffffff;
           margin-bottom: 1.5rem;
           letter-spacing: -0.02em;
+        }
+
+        .gold-italic {
+          color: #D4AF37;
+          font-style: italic;
+          font-weight: 600;
         }
         
         .blog-subtitle {
@@ -160,8 +168,13 @@ export default function BlogPage() {
           border: 1px solid #2A2A2A;
           display: flex;
           flex-direction: column;
-          background-color: transparent;
-          min-height: 35rem; 
+          background-color: #141414;
+          min-height: 35rem;
+          transition: border-color 0.25s ease;
+        }
+
+        .blog-card:hover {
+          border-color: rgba(212, 175, 55, 0.5);
         }
         
         .blog-image-wrapper {
@@ -192,9 +205,9 @@ export default function BlogPage() {
 
         .blog-date {
           font-size: 0.75rem;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: #6b7280;
+          color: #D4AF37;
           margin-bottom: 1rem;
           font-weight: 600;
         }
@@ -221,19 +234,19 @@ export default function BlogPage() {
           text-align: center;
           padding: 1rem;
           background-color: transparent;
-          border: 1px solid #ffffff;
-          color: #ffffff;
+          border: 1px solid #D4AF37;
+          color: #D4AF37;
           text-decoration: none;
-          font-size: 0.875rem;
-          font-weight: 600;
+          font-size: 0.8125rem;
+          font-weight: 700;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
         }
         
         .read-article-btn:hover {
-          background-color: #ffffff;
-          color: #000000;
+          background-color: #D4AF37;
+          color: #111111;
         }
       `}</style>
     </div>

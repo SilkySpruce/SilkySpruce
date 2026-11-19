@@ -188,7 +188,7 @@ export default function ProductClient({ slug }: { slug: string }) {
         <div className="w-full md:w-1/2 flex flex-col gap-4">
           
           {/* Main Display Image */}
-          <div className="aspect-square relative overflow-hidden bg-[#1A1A1A]">
+          <div className="aspect-square relative overflow-hidden bg-[#1A1A1A] border border-[#2A2A2A]">
             {allImages.length > 0 ? (
               <Image 
                 src={allImages[currentImageIndex] || allImages[0]} 
@@ -212,7 +212,7 @@ export default function ProductClient({ slug }: { slug: string }) {
                   onClick={() => setCurrentImageIndex(idx)}
                   className={`relative w-20 h-20 flex-shrink-0 border-2 transition ${
                     currentImageIndex === idx 
-                      ? 'border-[#788E7D]' 
+                      ? 'border-[#D4AF37]' 
                       : 'border-transparent hover:border-[#2A2A2A]'
                   }`}
                 >
@@ -230,7 +230,7 @@ export default function ProductClient({ slug }: { slug: string }) {
 
         {/* Details Column */}
         <div className="w-full md:w-1/2 flex flex-col justify-center">
-          <Link href="/shop" className="text-sm text-gray-400 hover:text-white mb-6 w-fit">
+          <Link href="/shop" className="text-sm text-gray-400 hover:text-[#D4AF37] mb-6 w-fit transition">
             &larr; Back to Shop
           </Link>
           
@@ -238,7 +238,9 @@ export default function ProductClient({ slug }: { slug: string }) {
           
           {selectedVariation ? (
             <>
-              <p className="text-2xl text-[#788E7D] mb-6">KSh {selectedVariation.price}</p>
+              <p className="text-2xl text-[#D4AF37] font-bold mb-6">
+                KSh {selectedVariation.price.toLocaleString()}
+              </p>
               
               {/* EXPANDABLE DESCRIPTION */}
               <div className="text-gray-400 mb-8 leading-relaxed whitespace-pre-wrap">
@@ -256,7 +258,7 @@ export default function ProductClient({ slug }: { slug: string }) {
                 {hasLongDesc && shortDesc !== longDesc && (
                   <button 
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="text-white text-sm font-semibold underline mt-3 block hover:text-[#788E7D] transition"
+                    className="text-white text-sm font-semibold underline mt-3 block hover:text-[#D4AF37] transition"
                   >
                     {isExpanded ? "Show Less" : "Read More"}
                   </button>
@@ -276,10 +278,10 @@ export default function ProductClient({ slug }: { slug: string }) {
                       <button
                         key={v.id}
                         onClick={() => handleSizeSelect(v)}
-                        className={`px-5 py-2 border transition ${
+                        className={`px-5 py-2 border transition font-medium ${
                           selectedVariation?.id === v.id
-                            ? 'border-[#788E7D] bg-[#788E7D] text-white'
-                            : 'border-[#2A2A2A] text-gray-400 hover:border-gray-500 bg-transparent'
+                            ? 'border-[#D4AF37] bg-[#D4AF37] text-[#111111] font-semibold'
+                            : 'border-[#2A2A2A] text-gray-400 hover:border-[#D4AF37] hover:text-white bg-transparent'
                         }`}
                       >
                         {v.size || 'Standard'}
@@ -307,7 +309,7 @@ export default function ProductClient({ slug }: { slug: string }) {
                 <button 
                   onClick={handleAddToCart}
                   disabled={isOutOfStock || limitReached}
-                  className="flex-1 min-w-[200px] bg-[#788E7D] hover:bg-[#687C6D] text-white py-3 px-8 font-semibold tracking-wider transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#788E7D]"
+                  className="flex-1 min-w-[200px] bg-[#D4AF37] hover:bg-[#E5C158] text-[#111111] py-3 px-8 font-bold tracking-wider transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#D4AF37]"
                 >
                   {isOutOfStock ? "OUT OF STOCK" : limitReached ? "MAX IN CART" : "ADD TO CART"}
                 </button>

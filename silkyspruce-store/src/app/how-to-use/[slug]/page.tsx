@@ -90,6 +90,7 @@ export default async function HowToSinglePage({ params }: { params: Promise<{ sl
       </div>
 
       <header className="article-header">
+        <p className="article-kicker">APPLICATION RITUAL</p>
         <h1 className="article-title">{guide.title}</h1>
       </header>
 
@@ -128,12 +129,21 @@ export default async function HowToSinglePage({ params }: { params: Promise<{ sl
         }
 
         .back-to-blog:hover {
-          color: #788E7D;
+          color: #D4AF37;
         }
 
         .article-header {
           margin-bottom: 3rem;
           text-align: center;
+        }
+
+        .article-kicker {
+          font-size: 0.8125rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: #D4AF37;
+          margin-bottom: 1.25rem;
+          font-weight: 600;
         }
 
         .article-title {
@@ -154,7 +164,7 @@ export default async function HowToSinglePage({ params }: { params: Promise<{ sl
           width: 100%;
           margin-bottom: 4rem;
           overflow: hidden;
-          border: 1px solid #2A2A2A;
+          border: 1px solid rgba(212, 175, 55, 0.3);
         }
 
         .article-hero-image {
@@ -193,9 +203,13 @@ export default async function HowToSinglePage({ params }: { params: Promise<{ sl
         .article-body li {
           margin-bottom: 0.75rem;
         }
+
+        .article-body li::marker {
+          color: #D4AF37;
+        }
         
         .article-body em {
-          color: #788E7D;
+          color: #D4AF37;
           font-style: italic;
         }
       `}</style>

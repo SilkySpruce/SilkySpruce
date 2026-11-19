@@ -26,13 +26,16 @@ export default function UnsubscribePage() {
   return (
     <div className="unsubscribe-container">
       <div className="unsubscribe-card">
-        <h1 className="unsubscribe-title">Unsubscribe</h1>
+        <p className="unsubscribe-kicker">SILKY SPRUCE TRIBE</p>
+        <h1 className="unsubscribe-title">
+          Manage <span className="gold-italic">Preferences</span>
+        </h1>
         
         {feedback && !feedback.isError ? (
           <div className="success-state">
             <p className="success-message">{feedback.message}</p>
-            <p className="success-subtext">We're sorry to see you go. You will no longer receive marketing emails from us.</p>
-            <Link href="/" className="return-home-btn">Return to Homepage</Link>
+            <p className="success-subtext">We&apos;re sorry to see you go. You will no longer receive marketing emails from us.</p>
+            <Link href="/" className="return-home-btn">RETURN TO HOMEPAGE</Link>
           </div>
         ) : (
           <>
@@ -76,16 +79,29 @@ export default function UnsubscribePage() {
         .unsubscribe-card {
           width: 100%;
           max-width: 32rem;
-          border: 1px solid #2A2A2A;
+          border: 1px solid rgba(212, 175, 55, 0.3);
           padding: 3rem;
-          background-color: transparent;
+          background-color: #141414;
           text-align: center;
+        }
+        .unsubscribe-kicker {
+          font-size: 0.75rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: #D4AF37;
+          margin-bottom: 0.75rem;
+          font-weight: 700;
         }
         .unsubscribe-title {
           font-size: 2rem;
           font-weight: 700;
           color: #ffffff;
           margin-bottom: 1rem;
+        }
+        .gold-italic {
+          color: #D4AF37;
+          font-style: italic;
+          font-weight: 600;
         }
         .unsubscribe-description {
           color: #9ca3af;
@@ -113,7 +129,7 @@ export default function UnsubscribePage() {
           font-weight: 600;
         }
         .form-group input {
-          background-color: transparent;
+          background-color: #111111;
           border: 1px solid #2A2A2A;
           padding: 1rem;
           color: #ffffff;
@@ -122,7 +138,7 @@ export default function UnsubscribePage() {
         }
         .form-group input:focus {
           outline: none;
-          border-color: #ef4444; /* Red focus to indicate destructive action */
+          border-color: #ef4444;
         }
         
         .unsubscribe-btn {
@@ -131,12 +147,12 @@ export default function UnsubscribePage() {
           color: #ef4444;
           border: 1px solid #ef4444;
           padding: 1.25rem;
-          font-size: 1rem;
-          font-weight: 600;
-          letter-spacing: 0.05em;
+          font-size: 0.9375rem;
+          font-weight: 700;
+          letter-spacing: 0.06em;
           cursor: pointer;
           transition: all 0.2s ease;
-          margin-top: 1rem;
+          margin-top: 0.5rem;
         }
         .unsubscribe-btn:hover:not(:disabled) {
           background-color: #ef4444;
@@ -162,24 +178,24 @@ export default function UnsubscribePage() {
         .success-message {
           font-size: 1.25rem;
           font-weight: 600;
-          color: #788E7D;
+          color: #D4AF37;
         }
         .success-subtext {
           color: #9ca3af;
           font-size: 1rem;
         }
         .return-home-btn {
-          background-color: #788E7D;
-          color: #ffffff;
+          background-color: #D4AF37;
+          color: #111111;
           text-decoration: none;
           padding: 1rem 2rem;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 0.875rem;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.06em;
           transition: background-color 0.2s ease;
         }
         .return-home-btn:hover {
-          background-color: #687C6D;
+          background-color: #E5C158;
         }
       `}</style>
     </div>

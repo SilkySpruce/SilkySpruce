@@ -3,8 +3,10 @@ export default function TermsOfService() {
     <main className="min-h-screen bg-[#111111] text-[#d1d5db] px-6 py-20 flex justify-center">
       <div className="max-w-3xl w-full flex flex-col gap-8">
         <div className="border-b border-[#2A2A2A] pb-6">
-          <span className="text-xs uppercase tracking-widest text-[#788E7D] font-semibold">Legal Documentation</span>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mt-2">Terms of Service</h1>
+          <span className="text-xs uppercase tracking-[0.22em] text-[#D4AF37] font-bold">Legal Documentation</span>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mt-2">
+            Terms of <span className="text-[#D4AF37] italic font-semibold">Service</span>
+          </h1>
           <p className="text-xs text-[#6b7280] mt-2">Last updated: November 2026</p>
         </div>
 
@@ -36,7 +38,10 @@ export default function TermsOfService() {
 
           <h2 className="text-xl font-semibold text-white mt-4">6. Contact Information</h2>
           <p>
-            Questions about the Terms of Service should be sent to us at fountaincreations@gmail.com.
+            Questions about the Terms of Service should be sent to us at{' '}
+            <a href="mailto:fountaincreations@gmail.com" className="text-[#D4AF37] hover:underline">
+              fountaincreations@gmail.com
+            </a>.
           </p>
         </section>
       </div>

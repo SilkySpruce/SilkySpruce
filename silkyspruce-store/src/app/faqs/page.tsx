@@ -46,7 +46,9 @@ export default function FaqsPage() {
       {/* PAGE HEADER */}
       <div className="faqs-header">
         <p className="faqs-subtitle">We Are Here to Help</p>
-        <h1 className="faqs-title">Frequently Asked Questions</h1>
+        <h1 className="faqs-title">
+          Frequently Asked <span className="gold-italic">Questions</span>
+        </h1>
         <p className="faqs-description">
           Do you have questions? We have gathered answers to help you shop with confidence and care. If you cannot find what you are looking for, please reach out to us.
         </p>
@@ -57,6 +59,7 @@ export default function FaqsPage() {
         {/* THE PRODUCTS SECTION */}
         <section className="faq-section">
           <div className="section-header">
+            <span className="section-kicker">01 • FORMULATIONS & CARE</span>
             <h2 className="section-title">The Products</h2>
           </div>
           <FaqAccordion items={productFaqs} />
@@ -65,6 +68,7 @@ export default function FaqsPage() {
         {/* ORDERS & SHIPPING SECTION */}
         <section className="faq-section">
           <div className="section-header">
+            <span className="section-kicker">02 • DELIVERY & POLICIES</span>
             <h2 className="section-title">Orders and Shipping</h2>
           </div>
           <FaqAccordion items={shippingFaqs} />
@@ -72,10 +76,13 @@ export default function FaqsPage() {
 
         {/* STILL HAVE QUESTIONS BLOCK */}
         <section className="still-questions-block">
-          <h2 className="still-questions-title">Do you still have questions?</h2>
-          <p className="still-questions-desc">We would love to hear from you.</p>
-          <Link href="/contact-us" className="get-in-touch-link">
-            Get in Touch
+          <div>
+            <p className="still-questions-kicker">NEED PERSONAL ASSISTANCE?</p>
+            <h2 className="still-questions-title">Do you still have questions?</h2>
+            <p className="still-questions-desc">We would love to hear from you.</p>
+          </div>
+          <Link href="/contact-us" className="get-in-touch-btn">
+            GET IN TOUCH
           </Link>
         </section>
 
@@ -87,37 +94,45 @@ export default function FaqsPage() {
           width: 100%;
           max-width: 64rem;
           margin: 0 auto;
-          padding: 6rem 2rem 8rem;
+          padding: 5rem 2rem 8rem;
           display: flex;
           flex-direction: column;
         }
 
         /* Header */
         .faqs-header {
-          margin-bottom: 4rem;
+          margin-bottom: 4.5rem;
+          padding-bottom: 3rem;
+          border-bottom: 1px solid #2A2A2A;
         }
         .faqs-subtitle {
-          font-size: 0.75rem;
-          letter-spacing: 0.15em;
+          font-size: 0.8125rem;
+          letter-spacing: 0.25em;
           text-transform: uppercase;
-          color: #ffffff;
+          color: #D4AF37;
           margin-bottom: 1rem;
           font-weight: 700;
         }
         .faqs-title {
-          font-size: 3rem;
+          font-size: 2.75rem;
           font-weight: 700;
           color: #ffffff;
           margin-bottom: 1.5rem;
+          letter-spacing: -0.02em;
         }
         @media (min-width: 768px) {
           .faqs-title {
-            font-size: 3.5rem;
+            font-size: 3.75rem;
           }
+        }
+        .gold-italic {
+          color: #D4AF37;
+          font-style: italic;
+          font-weight: 600;
         }
         .faqs-description {
           font-size: 1.125rem;
-          color: #6b7280;
+          color: #9ca3af;
           line-height: 1.6;
           max-width: 48rem;
         }
@@ -132,9 +147,19 @@ export default function FaqsPage() {
           width: 100%;
         }
         .section-header {
-          border-bottom: 2px solid #ffffff;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.45);
           padding-bottom: 1rem;
-          margin-bottom: 1rem;
+          margin-bottom: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+        .section-kicker {
+          font-size: 0.6875rem;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: #D4AF37;
+          font-weight: 600;
         }
         .section-title {
           font-size: 1.875rem;
@@ -144,31 +169,55 @@ export default function FaqsPage() {
 
         /* Still Have Questions */
         .still-questions-block {
-          margin-top: 2rem;
+          margin-top: 1rem;
+          padding: 2.5rem;
+          border: 1px solid rgba(212, 175, 55, 0.35);
+          background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(20, 20, 20, 0.95) 100%);
+          display: flex;
+          flex-direction: column;
+          gap: 1.75rem;
+          align-items: flex-start;
         }
-        .still-questions-title {
-          font-size: 1.5rem;
+        @media (min-width: 768px) {
+          .still-questions-block {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 3rem;
+          }
+        }
+        .still-questions-kicker {
+          font-size: 0.6875rem;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: #D4AF37;
           font-weight: 700;
-          color: #ffffff;
           margin-bottom: 0.5rem;
         }
-        .still-questions-desc {
-          font-size: 1.125rem;
-          color: #6b7280;
-          margin-bottom: 2rem;
-        }
-        .get-in-touch-link {
-          font-size: 1rem;
-          font-weight: 600;
+        .still-questions-title {
+          font-size: 1.625rem;
+          font-weight: 700;
           color: #ffffff;
-          text-decoration: none;
-          border-bottom: 1px solid #ffffff;
-          padding-bottom: 0.25rem;
-          transition: color 0.2s ease, border-color 0.2s ease;
+          margin-bottom: 0.35rem;
         }
-        .get-in-touch-link:hover {
+        .still-questions-desc {
+          font-size: 1rem;
           color: #9ca3af;
-          border-color: #9ca3af;
+        }
+        .get-in-touch-btn {
+          display: inline-block;
+          background-color: #D4AF37;
+          color: #111111;
+          text-decoration: none;
+          padding: 1rem 2rem;
+          font-size: 0.875rem;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          white-space: nowrap;
+          transition: background-color 0.2s ease;
+        }
+        .get-in-touch-btn:hover {
+          background-color: #E5C158;
         }
       `}</style>
     </div>

@@ -32,7 +32,7 @@ export default function Footer() {
         </h4>
         
         <h2 className="footer-title">
-          Silky Spruce Knowledge & Exclusive Offers
+          Silky Spruce Knowledge &amp; Exclusive Offers
         </h2>
         
         <p className="footer-description">
@@ -118,12 +118,12 @@ export default function Footer() {
         }
 
         .footer-subtitle {
-          font-size: 0.625rem;
-          letter-spacing: 0.1em;
+          font-size: 0.75rem;
+          letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: #9ca3af;
+          color: #D4AF37;
           margin-bottom: 1rem;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .footer-title {
@@ -167,6 +167,10 @@ export default function Footer() {
           max-width: 32rem;
           border-bottom: 1px solid #2A2A2A;
           padding-bottom: 0.5rem;
+          transition: border-color 0.2s ease;
+        }
+        .subscription-form:focus-within {
+          border-bottom-color: #D4AF37;
         }
         @media (min-width: 640px) {
           .subscription-form {
@@ -187,11 +191,12 @@ export default function Footer() {
         }
 
         .subscribe-btn {
-          background-color: #788E7D;
-          color: #ffffff;
+          background-color: #D4AF37;
+          color: #111111;
           padding: 0.75rem 2rem;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 0.875rem;
+          letter-spacing: 0.06em;
           border: none;
           cursor: pointer;
           transition: background-color 0.2s ease;
@@ -206,7 +211,7 @@ export default function Footer() {
           }
         }
         .subscribe-btn:hover:not(:disabled) {
-          background-color: #687C6D;
+          background-color: #E5C158;
         }
         .subscribe-btn:disabled {
           opacity: 0.7;
@@ -214,7 +219,7 @@ export default function Footer() {
         }
 
         .success-message {
-          color: #788E7D;
+          color: #D4AF37;
           font-weight: 600;
           font-size: 1.125rem;
           padding: 1rem;
@@ -299,7 +304,7 @@ export default function Footer() {
           transition: color 0.2s ease;
         }
         .legal-link:hover {
-          color: #ffffff;
+          color: #D4AF37;
         }
 
         .legal-divider {

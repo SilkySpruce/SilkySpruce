@@ -38,7 +38,9 @@ export default function HowToPage() {
       {/* EDITORIAL HEADER */}
       <header className="guide-header-creative">
         <p className="guide-kicker">Daily Routines</p>
-        <h1 className="guide-title">How To Guides</h1>
+        <h1 className="guide-title">
+          How To <span className="gold-italic">Guides</span>
+        </h1>
         <p className="guide-subtitle">
           Unlock the full potential of your natural products with our expert application techniques.
         </p>
@@ -46,7 +48,7 @@ export default function HowToPage() {
 
       {/* GUIDE GRID */}
       <div className="guide-grid">
-        {HOW_TO_GUIDES.map((guide) => (
+        {HOW_TO_GUIDES.map((guide, index) => (
           <article key={guide.id} className="guide-card">
             
             <div className="guide-image-wrapper">
@@ -58,6 +60,7 @@ export default function HowToPage() {
             </div>
             
             <div className="guide-content">
+              <p className="guide-step">GUIDE 0{index + 1}</p>
               <h3 className="guide-card-title">{guide.title}</h3>
               <p className="guide-excerpt">{guide.excerpt}</p>
               
@@ -88,10 +91,10 @@ export default function HowToPage() {
         }
         
         .guide-kicker {
-          font-size: 0.875rem;
-          letter-spacing: 0.2em;
+          font-size: 0.8125rem;
+          letter-spacing: 0.25em;
           text-transform: uppercase;
-          color: #788E7D;
+          color: #D4AF37;
           margin-bottom: 1.25rem;
           font-weight: 600;
         }
@@ -102,6 +105,12 @@ export default function HowToPage() {
           color: #ffffff;
           margin-bottom: 1.5rem;
           letter-spacing: -0.02em;
+        }
+
+        .gold-italic {
+          color: #D4AF37;
+          font-style: italic;
+          font-weight: 600;
         }
         
         .guide-subtitle {
@@ -138,8 +147,13 @@ export default function HowToPage() {
           border: 1px solid #2A2A2A;
           display: flex;
           flex-direction: column;
-          background-color: transparent;
-          min-height: 35rem; 
+          background-color: #141414;
+          min-height: 35rem;
+          transition: border-color 0.25s ease;
+        }
+
+        .guide-card:hover {
+          border-color: rgba(212, 175, 55, 0.5);
         }
         
         .guide-image-wrapper {
@@ -168,6 +182,15 @@ export default function HowToPage() {
           flex-grow: 1;
         }
 
+        .guide-step {
+          font-size: 0.75rem;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #D4AF37;
+          margin-bottom: 0.875rem;
+          font-weight: 700;
+        }
+
         .guide-card-title {
           font-size: 1.5rem;
           font-weight: 600;
@@ -190,19 +213,19 @@ export default function HowToPage() {
           text-align: center;
           padding: 1rem;
           background-color: transparent;
-          border: 1px solid #ffffff;
-          color: #ffffff;
+          border: 1px solid #D4AF37;
+          color: #D4AF37;
           text-decoration: none;
-          font-size: 0.875rem;
-          font-weight: 600;
+          font-size: 0.8125rem;
+          font-weight: 700;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
         }
         
         .read-guide-btn:hover {
-          background-color: #ffffff;
-          color: #000000;
+          background-color: #D4AF37;
+          color: #111111;
         }
       `}</style>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense, useRef } from 'react';
-import { Package, MapPin, Star, Heart, User, LogOut, Plus, Trash2, Edit2 } from 'lucide-react';
+import { Package, MapPin, Star, User, LogOut, Plus, Trash2, Edit2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useUserStore } from '@/store/userStore';
 import Link from 'next/link';
@@ -439,6 +439,7 @@ function AccountPageContent() {
     return (
       <div className="auth-container">
         <div className="auth-card">
+          <p className="auth-kicker">SILKY SPRUCE</p>
           <h1 className="auth-title">My Account</h1>
           <p className="auth-subtitle">
             {authMode === 'login' ? 'Sign in to manage your account and orders.' : 'Create an account to join the community.'}
@@ -559,7 +560,8 @@ function AccountPageContent() {
       />
 
       <div className="dashboard-header">
-        <h1 className="dashboard-title">Welcome back, {user?.firstName || 'Friend'}</h1>
+        <p className="dashboard-kicker">MEMBER DASHBOARD</p>
+        <h1 className="dashboard-title">Welcome back, <span className="gold-text">{user?.firstName || 'Friend'}</span></h1>
       </div>
 
       <div className="dashboard-layout">
@@ -705,7 +707,7 @@ function AccountPageContent() {
                           required
                           defaultValue={newAddress.streetAddress}
                           placeholder="Start typing to search..."
-                          className="w-full bg-transparent border border-[#2A2A2A] text-white p-3 pl-12 focus:outline-none focus:border-[#788E7D]"
+                          className="w-full bg-transparent border border-[#2A2A2A] text-white p-3 pl-12 focus:outline-none focus:border-[#D4AF37]"
                         />
                       </div>
                     </div>
@@ -786,12 +788,17 @@ function AccountPageContent() {
               <h2 className="tab-title">Spruce Loyalty Rewards</h2>
               <div className="loyalty-card">
                 <div className="loyalty-points">
-                  <Star size={40} className="text-gold" />
+                  <div className="loyalty-icon-ring">
+                    <Star size={32} className="text-gold" />
+                  </div>
                   <div>
                     <h3 className="points-number">{user?.loyaltyPoints || 0} Points</h3>
                     <p className="points-tier">{getLoyaltyTier(user?.loyaltyPoints || 0)} Tier</p>
                   </div>
                 </div>
+                <p className="loyalty-subtext">
+                  Earn 1 point for every KSh 100 spent. Apply your points directly at checkout for instant savings on any order.
+                </p>
               </div>
             </section>
           )}
@@ -882,9 +889,18 @@ const AuthStyles = () => (
       max-width: 28rem;
       border: 1px solid #2A2A2A;
       padding: 3rem 2.5rem;
-      background-color: transparent;
+      background-color: #141414;
       display: flex;
       flex-direction: column;
+    }
+    .auth-kicker {
+      font-size: 0.6875rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: #D4AF37;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
     }
     .auth-title {
       font-size: 2rem;
@@ -899,7 +915,6 @@ const AuthStyles = () => (
       margin-bottom: 2.5rem;
       font-size: 0.875rem;
     }
-
     .google-btn {
       width: 100%;
       display: flex;
@@ -968,7 +983,7 @@ const AuthStyles = () => (
     }
     .form-group input:focus {
       outline: none;
-      border-color: #788E7D;
+      border-color: #D4AF37;
     }
     .error-text {
       color: #ef4444;
@@ -977,24 +992,24 @@ const AuthStyles = () => (
       font-weight: 600;
     }
     .success-text {
-      color: #788E7D;
+      color: #D4AF37;
       font-size: 0.875rem;
       margin-bottom: 0.5rem;
       font-weight: 600;
     }
     .submit-btn {
-      background: #788E7D;
-      color: #ffffff;
+      background: #D4AF37;
+      color: #111111;
       border: none;
       padding: 1rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
+      font-weight: 700;
+      letter-spacing: 0.06em;
       cursor: pointer;
       margin-top: 1rem;
       transition: background 0.2s;
     }
     .submit-btn:hover:not(:disabled) {
-      background: #687C6D;
+      background: #E5C158;
     }
     .submit-btn:disabled {
       opacity: 0.7;
@@ -1009,10 +1024,10 @@ const AuthStyles = () => (
     .auth-toggle button {
       background: none;
       border: none;
-      color: #ffffff;
+      color: #D4AF37;
       font-weight: 600;
       cursor: pointer;
-      border-bottom: 1px solid #ffffff;
+      border-bottom: 1px solid #D4AF37;
       margin-left: 0.5rem;
       padding-bottom: 0.1rem;
     }
@@ -1033,7 +1048,7 @@ const AuthStyles = () => (
     .remember-me input[type="checkbox"] {
       width: 1rem;
       height: 1rem;
-      accent-color: #788E7D;
+      accent-color: #D4AF37;
       cursor: pointer;
     }
   `}</style>
@@ -1059,10 +1074,21 @@ const DashboardStyles = () => (
       border-bottom: 1px solid #2A2A2A;
       padding-bottom: 2rem;
     }
+    .dashboard-kicker {
+      font-size: 0.6875rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #D4AF37;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
     .dashboard-title {
       font-size: 2.5rem;
       font-weight: 700;
       color: #ffffff;
+    }
+    .gold-text {
+      color: #D4AF37;
     }
     .dashboard-layout {
       display: flex;
@@ -1106,10 +1132,11 @@ const DashboardStyles = () => (
       color: #ffffff;
     }
     .nav-item.active {
-      border-color: #2A2A2A;
-      color: #ffffff;
+      border-color: rgba(212, 175, 55, 0.45);
+      border-left: 3px solid #D4AF37;
+      color: #D4AF37;
       font-weight: 600;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(212, 175, 55, 0.06);
     }
     .logout-btn {
       margin-top: 2rem;
@@ -1145,6 +1172,7 @@ const DashboardStyles = () => (
       font-size: 1.5rem;
       font-weight: 600;
       color: #ffffff;
+      margin-bottom: 1.5rem;
     }
     .mb-0 {
       margin-bottom: 0 !important;
@@ -1154,18 +1182,18 @@ const DashboardStyles = () => (
       align-items: center;
       gap: 0.5rem;
       background: transparent;
-      border: 1px solid #788E7D;
-      color: #788E7D;
+      border: 1px solid #D4AF37;
+      color: #D4AF37;
       padding: 0.5rem 1rem;
       font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
+      font-weight: 700;
+      letter-spacing: 0.06em;
       cursor: pointer;
       transition: all 0.2s;
     }
     .add-new-btn:hover {
-      background: #788E7D;
-      color: #ffffff;
+      background: #D4AF37;
+      color: #111111;
     }
     .profile-form {
       display: flex;
@@ -1206,7 +1234,7 @@ const DashboardStyles = () => (
     }
     .form-group input:focus {
       outline: none;
-      border-color: #788E7D;
+      border-color: #D4AF37;
     }
     .disabled-input {
       opacity: 0.5;
@@ -1222,7 +1250,7 @@ const DashboardStyles = () => (
     .checkbox-group input[type="checkbox"] {
       width: 1.25rem;
       height: 1.25rem;
-      accent-color: #788E7D;
+      accent-color: #D4AF37;
       cursor: pointer;
     }
     .checkbox-group label {
@@ -1237,19 +1265,19 @@ const DashboardStyles = () => (
       margin-top: 1rem;
     }
     .save-btn {
-      background: #ffffff;
-      color: #000000;
-      border: 1px solid #ffffff;
+      background: #D4AF37;
+      color: #111111;
+      border: 1px solid #D4AF37;
       padding: 1rem 2rem;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 0.875rem;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       cursor: pointer;
       transition: all 0.2s;
     }
     .save-btn:hover {
-      background: transparent;
-      color: #ffffff;
+      background: #E5C158;
+      border-color: #E5C158;
     }
     .cancel-btn {
       background: transparent;
@@ -1292,7 +1320,7 @@ const DashboardStyles = () => (
     .address-card {
       border: 1px solid #2A2A2A;
       padding: 1.5rem;
-      background: transparent;
+      background: #141414;
       display: flex;
       flex-direction: column;
     }
@@ -1308,8 +1336,9 @@ const DashboardStyles = () => (
       font-size: 1.125rem;
     }
     .default-badge {
-      background: rgba(120,142,125,0.2);
-      color: #788E7D;
+      background: rgba(212, 175, 55, 0.15);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: #D4AF37;
       padding: 0.25rem 0.5rem;
       font-size: 0.625rem;
       font-weight: 700;
@@ -1338,7 +1367,7 @@ const DashboardStyles = () => (
     .action-link {
       background: transparent;
       border: none;
-      color: #788E7D;
+      color: #D4AF37;
       font-size: 0.875rem;
       font-weight: 600;
       cursor: pointer;
@@ -1371,19 +1400,29 @@ const DashboardStyles = () => (
       font-size: 1rem;
     }
     .loyalty-card {
-      border: 1px solid #788E7D;
+      border: 1px solid rgba(212, 175, 55, 0.45);
       padding: 2rem;
-      background: rgba(120, 142, 125, 0.1);
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.09) 0%, rgba(20, 20, 20, 0.95) 100%);
       max-width: 32rem;
     }
     .loyalty-points {
       display: flex;
       align-items: center;
       gap: 1.5rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .loyalty-icon-ring {
+      width: 4rem;
+      height: 4rem;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      background: rgba(17, 17, 17, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
     .text-gold {
-      color: #fbbf24;
+      color: #D4AF37;
     }
     .points-number {
       font-size: 2rem;
@@ -1391,11 +1430,16 @@ const DashboardStyles = () => (
       color: #ffffff;
     }
     .points-tier {
-      color: #fbbf24;
+      color: #D4AF37;
       font-size: 0.875rem;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-weight: 600;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+    }
+    .loyalty-subtext {
+      color: #d1d5db;
+      font-size: 0.875rem;
+      line-height: 1.6;
     }
     .empty-state-wrapper {
       display: flex;
@@ -1404,17 +1448,17 @@ const DashboardStyles = () => (
       gap: 1.5rem;
     }
     .browse-shop-btn {
-      background: #ffffff;
-      color: #000000;
+      background: #D4AF37;
+      color: #111111;
       text-decoration: none;
       padding: 1rem 2rem;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 0.875rem;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       transition: all 0.2s;
     }
     .browse-shop-btn:hover {
-      background: #e5e7eb;
+      background: #E5C158;
     }
     .order-list {
       display: flex;
@@ -1424,7 +1468,7 @@ const DashboardStyles = () => (
     .order-card {
       border: 1px solid #2A2A2A;
       padding: 1.5rem;
-      background: transparent;
+      background: #141414;
     }
     .order-header {
       display: flex;
@@ -1447,16 +1491,16 @@ const DashboardStyles = () => (
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      font-weight: 600;
-      padding: 0.25rem 0.5rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
     }
     .order-status.delivered {
-      background: rgba(120,142,125,0.2);
-      color: #788E7D;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
     }
     .order-status.pending {
-      background: rgba(251,191,36,0.1);
-      color: #fbbf24;
+      background: rgba(212, 175, 55, 0.15);
+      color: #D4AF37;
     }
     .order-details {
       color: #d1d5db;
@@ -1474,18 +1518,20 @@ const DashboardStyles = () => (
       color: #ffffff;
     }
     .reorder-btn {
-      border: 1px solid #ffffff;
+      border: 1px solid #D4AF37;
       background: transparent;
-      color: #ffffff;
+      color: #D4AF37;
       text-decoration: none;
-      padding: 0.5rem 1rem;
+      padding: 0.5rem 1.125rem;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      cursor: pointer;
       transition: all 0.2s;
     }
     .reorder-btn:hover {
-      background: #ffffff;
-      color: #000000;
+      background: #D4AF37;
+      color: #111111;
     }
     .pac-container {
       background-color: #1A1A1A !important;

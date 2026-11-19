@@ -54,13 +54,13 @@ export default function DeleteAccountFlow() {
               <div className="flex flex-col gap-4">
                 <h3 className="text-xl font-bold text-white">Are you absolutely sure?</h3>
                 <p className="text-[#9ca3af] text-sm">
-                  If you delete your account, you will instantly lose your <strong>{user?.loyaltyPoints || 0} Spruce Loyalty Points</strong>. This action cannot be undone.
+                  If you delete your account, you will instantly lose your <strong className="text-[#D4AF37]">{user?.loyaltyPoints || 0} Spruce Loyalty Points</strong>. This action cannot be undone.
                 </p>
                 <div className="flex flex-col gap-2 mt-4">
-                  <button onClick={handleClose} className="bg-[#788E7D] text-white p-3 font-semibold w-full hover:bg-[#687C6D]">
+                  <button onClick={handleClose} className="bg-[#D4AF37] text-[#111111] p-3 font-bold w-full hover:bg-[#E5C158] transition-colors cursor-pointer">
                     Keep My Account & Points
                   </button>
-                  <button onClick={() => setStage(2)} className="bg-transparent text-[#6b7280] p-3 text-sm hover:text-white">
+                  <button onClick={() => setStage(2)} className="bg-transparent text-[#6b7280] p-3 text-sm hover:text-white cursor-pointer">
                     I understand, proceed to deletion
                   </button>
                 </div>
@@ -75,15 +75,15 @@ export default function DeleteAccountFlow() {
                 
                 <div className="flex flex-col gap-2">
                   {["Products are too expensive", "I found another brand", "I get too many emails", "Other"].map(r => (
-                    <label key={r} className="flex items-center gap-3 text-sm text-[#d1d5db] cursor-pointer p-2 border border-[#2A2A2A] hover:border-[#788E7D]">
-                      <input type="radio" name="reason" value={r} onChange={(e) => setReason(e.target.value)} className="accent-[#788E7D]" />
+                    <label key={r} className="flex items-center gap-3 text-sm text-[#d1d5db] cursor-pointer p-2 border border-[#2A2A2A] hover:border-[#D4AF37] transition-colors">
+                      <input type="radio" name="reason" value={r} onChange={(e) => setReason(e.target.value)} className="accent-[#D4AF37]" />
                       {r}
                     </label>
                   ))}
                 </div>
 
                 <div className="flex justify-between items-center mt-4">
-                  <button onClick={handleClose} className="text-[#9ca3af] text-sm bg-transparent border-none cursor-pointer">Cancel</button>
+                  <button onClick={handleClose} className="text-[#9ca3af] text-sm bg-transparent border-none cursor-pointer hover:text-white">Cancel</button>
                   <div className="flex gap-4 items-center">
                     <button 
                       onClick={() => setStage(3)} 
@@ -121,11 +121,11 @@ export default function DeleteAccountFlow() {
                   <button 
                     onClick={executeDeletion}
                     disabled={confirmText !== "DELETE" || isDeleting}
-                    className="bg-[#ef4444] text-white p-3 font-semibold w-full hover:bg-[#dc2626] disabled:opacity-30"
+                    className="bg-[#ef4444] text-white p-3 font-semibold w-full hover:bg-[#dc2626] disabled:opacity-30 cursor-pointer"
                   >
                     {isDeleting ? "DELETING..." : "PERMANENTLY DELETE ACCOUNT"}
                   </button>
-                  <button onClick={handleClose} className="text-[#9ca3af] text-sm p-2 mt-2 bg-transparent border-none cursor-pointer">
+                  <button onClick={handleClose} className="text-[#9ca3af] text-sm p-2 mt-2 bg-transparent border-none cursor-pointer hover:text-white">
                     Nevermind, take me back
                   </button>
                 </div>

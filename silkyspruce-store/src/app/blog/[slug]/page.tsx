@@ -311,7 +311,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         }
 
         .back-to-blog:hover {
-          color: #788E7D;
+          color: #D4AF37;
         }
 
         .article-header {
@@ -321,9 +321,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         .article-date {
           font-size: 0.875rem;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #788E7D;
+          color: #D4AF37;
           margin-bottom: 1.5rem;
           font-weight: 600;
         }
@@ -346,7 +346,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           width: 100%;
           margin-bottom: 4rem;
           overflow: hidden;
-          border: 1px solid #2A2A2A;
+          border: 1px solid rgba(212, 175, 55, 0.3);
         }
 
         .article-hero-image {
@@ -376,10 +376,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           padding-bottom: 0.5rem;
         }
 
-        /* 
-         * FIX: Explicitly forcing standard bullet points (disc) 
-         * and numbers (decimal) to display on lists 
-         */
         .article-body ul {
           margin-bottom: 2rem;
           padding-left: 1.5rem;
@@ -394,6 +390,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         .article-body li {
           margin-bottom: 0.75rem;
+        }
+
+        .article-body li::marker {
+          color: #D4AF37;
         }
         
         .article-body strong {

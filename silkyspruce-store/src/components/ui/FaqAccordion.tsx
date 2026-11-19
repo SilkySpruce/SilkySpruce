@@ -68,7 +68,7 @@ export default function FaqAccordion({ items }: FaqAccordionProps) {
           transition: color 0.2s ease;
         }
         .accordion-trigger:hover, .trigger-active {
-          color: #788E7D;
+          color: #D4AF37;
         }
         .accordion-question {
           font-size: 1.125rem;
