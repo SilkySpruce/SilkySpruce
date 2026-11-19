@@ -8,7 +8,7 @@ import { Trash2, Plus, Minus, CreditCard, Smartphone, ShieldCheck, Gift, MapPin,
 import { useCartStore } from '@/store/cartStore';
 import { processCheckout } from '../actions/processCheckout';
 import { validateCoupon, ValidatedCoupon } from '../actions/validateCoupon';
-import { processReferralReward } from '../actions/completeReferral.ts';
+import { processReferralReward } from '../actions/completeReferral';
 import { getSavedReferralCode, clearSavedReferralCode } from '@/components/ReferralTracker';
 import { useUserStore } from '@/store/userStore';
 import { useRouter } from 'next/navigation';
