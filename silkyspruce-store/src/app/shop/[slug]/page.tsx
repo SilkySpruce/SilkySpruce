@@ -32,13 +32,16 @@ export async function generateMetadata(
   return {
     title: product.name,
     description: cleanDescription,
+    alternates: {
+      canonical: `https://silkyspruce.com/shop/${slug}`,
+    },
     openGraph: {
       title: product.name,
       description: cleanDescription,
-      url: `https://silkyspruce.co.ke/shop/${slug}`, // <-- Use the unwrapped slug
+      url: `https://silkyspruce.com/shop/${slug}`,
       images: [
         {
-          url: product.featured_image || previousImages[0], 
+          url: product.featured_image || previousImages[0],
           width: 800,
           height: 800,
           alt: product.name,

@@ -1,4 +1,13 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'The Silky Spruce Journal | Natural Skincare Blog',
+  description: 'Insights, rituals, and plant based remedies for your everyday glow.',
+  alternates: {
+    canonical: 'https://silkyspruce.com/blog',
+  },
+};
 
 const BLOG_POSTS = [
   {

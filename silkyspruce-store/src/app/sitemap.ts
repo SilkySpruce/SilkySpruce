@@ -13,6 +13,15 @@ const HOW_TO_SLUGS = [
   'peppermint-whipped-butter',
 ];
 
+const BLOG_SLUGS = [
+  'the-power-of-the-rose',
+  'best-body-butter-eczema-kenya',
+  'bebe-balm-natural-solution',
+  'hair-grows-naturally',
+  'treat-dry-skin-naturally',
+  'why-skin-loves-shea-butter',
+];
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://silkyspruce.com';
 
@@ -93,5 +102,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...productRoutes, ...guideRoutes];
+  const blogRoutes: MetadataRoute.Sitemap = BLOG_SLUGS.map((slug) => ({
+    url: `${baseUrl}/blog/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...productRoutes, ...guideRoutes, ...blogRoutes];
 }

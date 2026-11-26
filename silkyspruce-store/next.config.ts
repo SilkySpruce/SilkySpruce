@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/products/silky-spruce-neem-tea-tree-oil',
+        destination: '/shop/silky-spruce-essential-oil-tea-tree',
+        permanent: true,
+      },
+      {
         source: '/products/:slug((?!.*\\.(?:png|jpg|jpeg|webp|gif|svg|ico)$).*)',
         destination: '/shop/:slug',
         permanent: true,
@@ -36,6 +41,11 @@ const nextConfig: NextConfig = {
       {
         source: '/pages/contact',
         destination: '/contact-us',
+        permanent: true,
+      },
+      {
+        source: '/pages/faqs',
+        destination: '/faqs',
         permanent: true,
       },
       {
